@@ -25,7 +25,8 @@ class ServicioRequest extends FormRequest
     {
         return [
             //
-            'descripcion' => 'required'
+            'validiomaId' => 'required',
+            'idiomaId' => 'required',
         ];
     }
 }

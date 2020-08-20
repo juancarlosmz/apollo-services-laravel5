@@ -10,6 +10,6 @@ class Pago extends Model
     use Notifiable;
     protected $table = 'pagos';
     protected $fillable = [
-        'estado','fecha'
+        'value','fecha','ordenId'
     ];
 }

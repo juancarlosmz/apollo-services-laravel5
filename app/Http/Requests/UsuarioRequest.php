@@ -26,8 +26,6 @@ class UsuarioRequest extends FormRequest
         return [
             //
             'id_firebase' => 'required',
-            'tipouserId' => 'required',
-            'servicioId' => 'required'
         ];
     }
 }

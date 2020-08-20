@@ -7,9 +7,13 @@
     "require": {
         "php": ">=7.0.0",
         "fideloper/proxy": "~3.3",
-        "kreait/firebase-php": "4.0",
+        "kreait/firebase-php": "4.17.0",
         "laravel/framework": "5.5.*",
-        "laravel/tinker": "~1.0"
+        "laravel/passport": "~4.0",
+        "laravel/tinker": "~1.0",
+        "paragonie/random_compat": "2.*",
+        "stripe/stripe-php": "^7.37",
+        "vimeo/vimeo-api": "^3.0"
     },
     "require-dev": {
         "filp/whoops": "~2.0",
@@ -34,8 +38,7 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": [
-            ]
+            "dont-discover": []
         }
     },
     "scripts": {

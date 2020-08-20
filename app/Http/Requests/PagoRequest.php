@@ -25,8 +25,9 @@ class PagoRequest extends FormRequest
     {
         return [
             //
-            'estado' => 'required',
-            'fecha' => 'required'
+            'value' => 'required',
+            'fecha' => 'required',
+            'ordenId' => 'required'
         ];
     }
 }
