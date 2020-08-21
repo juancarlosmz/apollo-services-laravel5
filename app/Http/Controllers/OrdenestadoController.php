@@ -91,7 +91,7 @@ class OrdenestadoController extends Controller{
             $arrayIds = array();
             foreach ($data as $key => $dt) {
                 $dataUser = DB::table('usuarios')
-                    ->select('usuarios.name as comprador', 'usuarios.photo as thumbImg', 'usuarios.logo')
+                    ->select('usuarios.name as comprador', 'usuarios.photo as thumbImg')
                     ->where('usuarios.id', $dt->userIdcomprador)
                     ->get();
                 array_push($arrayIds, $dataUser);   
@@ -108,7 +108,6 @@ class OrdenestadoController extends Controller{
                     'total' => $data[$i]->total,
                     'comprador' => $arrayIds[$i][0]->comprador,
                     'thumbImg' => $arrayIds[$i][0]->thumbImg,
-                    'logo' => $arrayIds[$i][0]->logo,
                     'estado' => $data[$i]->Estados,
                     'traduccion' => $data[$i]->traduccion
                 ];
@@ -216,7 +215,7 @@ class OrdenestadoController extends Controller{
             $arrayIds = array();
             foreach ($data as $key => $dt) {
                 $dataUser = DB::table('usuarios')
-                    ->select('usuarios.name as comprador', 'usuarios.photo as thumbImg', 'usuarios.logo')
+                    ->select('usuarios.name as comprador', 'usuarios.photo as thumbImg')
                     ->where('usuarios.id', $dt->userIdcomprador)
                     ->get();
                 array_push($arrayIds, $dataUser);    
@@ -232,7 +231,6 @@ class OrdenestadoController extends Controller{
                     'total' => $data[$i]->total,
                     'comprador' => $arrayIds[$i][0]->comprador,
                     'thumbImg' => $arrayIds[$i][0]->thumbImg,
-                    'logo' => $arrayIds[$i][0]->logo,
                     'estado' => $data[$i]->descripcion,
                     'traduccion' => $data[$i]->traduccion
                 ];
@@ -288,7 +286,9 @@ class OrdenestadoController extends Controller{
             $arrayIds = array();
             foreach ($data as $key => $dt) {
                 $dataUser = DB::table('usuarios')
-                    ->select('usuarios.name as comprador', 'usuarios.photo as thumbImg', 'usuarios.logo')
+                    //->join('businesses', 'businesses.userId', '=', 'usuarios.id')
+                    //->select('usuarios.name as comprador', 'usuarios.photo as thumbImg', 'businesses.logo')
+                    ->select('usuarios.name as comprador', 'usuarios.photo as thumbImg')
                     ->where('usuarios.id', $dt->userIdcomprador)
                     ->get();
                 array_push($arrayIds, $dataUser);    
@@ -305,7 +305,7 @@ class OrdenestadoController extends Controller{
                         'total' => $data[$i]->total,
                         'comprador' => $arrayIds[$i][0]->comprador,
                         'thumbImg' => $arrayIds[$i][0]->thumbImg,
-                        'logo' => $arrayIds[$i][0]->logo,
+                        //'logo' => $arrayIds[$i][0]->logo,
                         'estado' => $data[$i]->descripcion,
                         'traduccion' => $data[$i]->traduccion
                     ];
@@ -490,7 +490,8 @@ class OrdenestadoController extends Controller{
             $arrayIds = array();
             foreach ($data as $key => $dt) {
                 $dataUser = DB::table('usuarios')
-                    ->select('usuarios.name as vendedor', 'usuarios.photo as thumbImg', 'usuarios.logo')
+                    ->join('businesses', 'businesses.userId', '=', 'usuarios.id')
+                    ->select('usuarios.name as vendedor', 'usuarios.photo as thumbImg', 'businesses.logo')
                     ->where('usuarios.id', $dt->userIdvendedor)
                     ->get();
                 array_push($arrayIds, $dataUser);   
@@ -547,7 +548,7 @@ class OrdenestadoController extends Controller{
             ->join('businesses', 'businesses.userId', '=', 'transaccions.userIdvendedor')
             ->select('ordens.id', 'ordens.numero', 'ordens.fechaentrega', 'ordens.descripcion as ordendescripcion', 'ordens.total','transaccions.userIdvendedor','businesses.descripcion as bussiness', DB::raw('(SELECT ordenestados.descripcion FROM ordenestados WHERE ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS descripcion'), DB::raw('(SELECT traduccions.descripcion FROM ordenestados INNER JOIN valuesidiomas ON ordenestados.validiomaId = valuesidiomas.id INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON traduccions.idiomaId = idiomas.id WHERE idiomas.id = "'.$idioma.'" and ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS traduccion'))
             ->where('usuarios.id_firebase', $id_firebase)
-            ->whereRaw('concat(ordens.numero," ",(SELECT usuarios.name FROM usuarios WHERE usuarios.id  = transaccions.userIdvendedor)) like ?', '%'.$busqueda.'%')
+            ->whereRaw('concat(ordens.numero," ",(SELECT businesses.descripcion FROM usuarios INNER JOIN businesses ON businesses.userId = usuarios.id WHERE usuarios.id  = transaccions.userIdvendedor)," ",(SELECT usuarios.name FROM usuarios WHERE usuarios.id  = transaccions.userIdvendedor)) like ?', '%'.$busqueda.'%')
             ->groupBy('ordens.id')
             ->orderBy('ordens.fechaentrega', 'DESC')
             ->get();                  
@@ -555,7 +556,8 @@ class OrdenestadoController extends Controller{
             $arrayIds = array();
             foreach ($data as $key => $dt) {
                 $dataUser = DB::table('usuarios')
-                    ->select('usuarios.name as vendedor', 'usuarios.photo as thumbImg', 'usuarios.logo')
+                    ->join('businesses', 'businesses.userId', '=', 'usuarios.id')
+                    ->select('usuarios.name as vendedor', 'usuarios.photo as thumbImg', 'businesses.logo')
                     ->where('usuarios.id', $dt->userIdvendedor)
                     ->get();
                 array_push($arrayIds, $dataUser);     

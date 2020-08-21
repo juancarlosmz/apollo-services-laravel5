@@ -78,7 +78,8 @@ class UsuarioController extends Controller{
                     'lng' => $request->lng,
                     'pais' => $request->pais,
                     'ciudad' => $request->ciudad,
-                    'Zip' => $request->zip
+                    'Zip' => $request->zip,
+                    'logo' => $request->logo,
                     ]);
                 $objeto3 = Serviciousuario::create([
                     'userId' => $userId[0]->userId,
@@ -102,7 +103,8 @@ class UsuarioController extends Controller{
                     'lng' => $request->lng,
                     'pais' => $request->pais,
                     'ciudad' => $request->ciudad,
-                    'Zip' => $request->zip
+                    'Zip' => $request->zip,
+                    'logo' => $request->logo,
                 ]);
                 return response(200);
             }   
@@ -112,13 +114,66 @@ class UsuarioController extends Controller{
         $data = DB::table('usuarios')
             ->join('businesses', 'businesses.userId', '=', 'usuarios.id')
             ->join('serviciousuarios', 'serviciousuarios.userId', '=', 'usuarios.id')
-            ->select('serviciousuarios.serviciosId', 'businesses.descripcion', 'businesses.details', 'businesses.lat', 'businesses.lng', 'businesses.direccion', 'businesses.pais', 'businesses.ciudad', 'businesses.Zip as zip')
+            ->select('serviciousuarios.serviciosId', 'businesses.descripcion', 'businesses.details', 'businesses.lat', 'businesses.lng', 'businesses.direccion', 'businesses.pais', 'businesses.ciudad', 'businesses.Zip', 'businesses.logo')
             ->where('usuarios.id_firebase', $id_firebase)
             ->get();
         if(count($data) == 0){  
             return response()->json(false);
         }else{
-            return $data;
+            $arrayData = array();
+            for($i = 0; $i<count($data); $i++){
+                $logo = '';
+                $details = '';
+                $direccion = '';
+                $pais = '';
+                $ciudad = '';
+                $Zip = '';
+                if($data[$i]->details == null){
+                    $details = '';
+                }else{
+                    $details = $data[$i]->details;
+                }
+                if($data[$i]->direccion == null){
+                    $direccion = '';
+                }else{
+                    $direccion = $data[$i]->direccion;
+                }
+                if($data[$i]->pais == null){
+                    $pais = '';
+                }else{
+                    $pais = $data[$i]->pais;
+                }
+                if($data[$i]->ciudad == null){
+                    $ciudad = '';
+                }else{
+                    $ciudad = $data[$i]->ciudad;
+                }
+                if($data[$i]->Zip == null){
+                    $Zip = '';
+                }else{
+                    $Zip = $data[$i]->Zip;
+                }
+                if($data[$i]->logo == null){
+                    $logo = '';
+                }else{
+                    $logo = $data[$i]->logo;
+                }
+                $object = (object) [
+                    'serviciosId' => $data[$i]->serviciosId,
+                    'descripcion' => $data[$i]->descripcion,
+                    'details' => $details,
+                    'lat' => $data[$i]->lat,
+                    'lng' => $data[$i]->lng,
+                    'direccion' => $direccion,
+                    'pais' => $pais,
+                    'ciudad' => $ciudad,
+                    'zip' => $Zip,
+                    'logo' => $logo,
+                ];
+                array_push($arrayData, $object);
+            }
+            return response()->json($arrayData); 
+            //return $data;
         }  
         
     }
