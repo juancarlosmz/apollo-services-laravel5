@@ -8,7 +8,7 @@ class OptionvaluemixController extends Controller{
             'idvideo' => 'required',
         ]);
         $idvideo = $request->idvideo;  
-        $results = DB::select( DB::raw('select videos.titlevideo,optionvaluemix.idvideo as idvideo, optionvaluemix.id, options.descripcion as option_keys, optionvalue.descripcion as option_values, optionvaluemix.precio, optionvaluemix.sort,optionvaluemix.id_item_stripe,videos.id_product_stripe from optionvaluemix INNER JOIN options ON options.id = optionvaluemix.idoption INNER JOIN optionvalue ON optionvalue.id = optionvaluemix.idoptionvalue INNER JOIN videos ON videos.id = optionvaluemix.idvideo where optionvaluemix.idvideo = "'.$idvideo.'" ORDER by optionvaluemix.sort ASC, options.descripcion ASC'));
+        $results = DB::select( DB::raw('select videos.titlevideo,optionvaluemix.idvideo as idvideo, optionvaluemix.id,options.id as option_keys_id, options.descripcion as option_keys,optionvalue.id as option_values_id, optionvalue.descripcion as option_values, optionvaluemix.precio, optionvaluemix.img, optionvaluemix.sort,optionvaluemix.id_item_stripe,videos.id_product_stripe from optionvaluemix INNER JOIN options ON options.id = optionvaluemix.idoption INNER JOIN optionvalue ON optionvalue.id = optionvaluemix.idoptionvalue INNER JOIN videos ON videos.id = optionvaluemix.idvideo where optionvaluemix.idvideo = "'.$idvideo.'" ORDER by optionvaluemix.sort ASC, options.descripcion ASC'));
 
         if($results){
             $arrayData = array();
@@ -24,8 +24,11 @@ class OptionvaluemixController extends Controller{
                     'id' => $results[$i]->id,
                     'id_product_stripe' => $results[$i]->id_product_stripe,
                     'option_keys' => $results[$i]->option_keys,
+                    'option_keys_id' => $results[$i]->option_keys_id,
                     'option_values' => $results[$i]->option_values,
+                    'option_values_id' => $results[$i]->option_values_id,
                     'precio' => $results[$i]->precio,
+                    'img' => $results[$i]->img,
                     'id_item_stripe' => $results[$i]->id_item_stripe,
                     'titlevideo' => str_replace('<br>',' ',$results[$i]->titlevideo),
                 ];
@@ -33,7 +36,9 @@ class OptionvaluemixController extends Controller{
             }
             $idval=0;
             $descripcion = '';
+            $descripcion_id = '';
             $precio = 0;
+            $img = '';
             $titlevideo = '';
             $arrayData3 = array();
             // primera opcion
@@ -41,17 +46,22 @@ class OptionvaluemixController extends Controller{
             for($i = 0; $i<count($arrayData); $i++){
                 if($arrayData[$i]->id == $idval){
                     $descripcion = $descripcion.' / '.$arrayData[$i]->option_values.'<br><small>'.$titlevideo.'</small>';
+                    $descripcion_id = $descripcion_id.' / '.$arrayData[$i]->option_values_id;
                     $object3 = (object) [
                         'id' => $idval,
                         'descripcion' => $descripcion,
+                        'descripcion_id' => $descripcion_id,
                         'precio' => $precio,
+                        'img' => $img,
                         'id_item_stripe' => $id_item_stripe,
                     ];
                     array_push($arrayData3, $object3);
                 }
                 $idval = $arrayData[$i]->id;
                 $descripcion = $arrayData[$i]->option_values;
+                $descripcion_id = $arrayData[$i]->option_values_id;
                 $precio = $arrayData[$i]->precio;
+                $img = $arrayData[$i]->img;
                 $titlevideo = $arrayData[$i]->titlevideo;
                 $id_item_stripe = $arrayData[$i]->id_item_stripe;
             }
@@ -60,23 +70,34 @@ class OptionvaluemixController extends Controller{
                     $object3 = (object) [
                         'id' => $arrayData[$i]->id,
                         'descripcion' => $arrayData[$i]->option_values.'<br><small>'.$arrayData[$i]->titlevideo.'</small>',
+                        'descripcion_id' => $arrayData[$i]->option_values_id,
                         'precio' => $arrayData[$i]->precio,
+                        'img' => $arrayData[$i]->img,
                         'id_item_stripe' => $arrayData[$i]->id_item_stripe,
                     ];
                     array_push($arrayData3, $object3);
                 }
             }
             
-            //
+            // lista simple_1
             $arrayData4 = array();
             for($i = 0; $i<count($arrayData); $i++){
                 array_push($arrayData4, $arrayData[$i]->option_keys);
             }
             $lista_simple = array_values(array_unique($arrayData4));
+
+            // lista simple_2
+            $arrayData5 = array();
+            for($i = 0; $i<count($arrayData); $i++){
+                array_push($arrayData5, $arrayData[$i]->option_keys_id);
+            }
+            $lista_simple2 = array_values(array_unique($arrayData5));
+            
             $object2 = (object) [
                 'idvideo' => $idvideo,
                 'id_product_stripe' => $id_product_stripe,
                 'options_keys' => $lista_simple,
+                'options_keys_id' => $lista_simple2,
                 'options_values' => $arrayData3,
             ];
             array_push($arrayData2, $object2);
@@ -101,6 +122,5 @@ class OptionvaluemixController extends Controller{
         }else{
             return response()->json(false);
         }
-
     }
 }

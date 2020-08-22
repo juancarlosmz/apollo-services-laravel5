@@ -66,6 +66,8 @@ Route::get('allvideosbusqueda','VideosController@showallvideosbusqueda');
 // vimeo
 Route::get('vimeo','VideosController@show3');
 Route::get('allvimeo','VideosController@show4');
+Route::post('crearvideovimeo','VideosController@crearvideovimeo');
+
 
 // servicios de Traducciones
 Route::get('traduccion/{idioma}','TraduccionController@show');
@@ -89,6 +91,11 @@ Route::post('login','Auth\LoginController@login');
 Route::post('leerUsuario','Auth\LoginController@leerUsuario');
 // en proceso toma tiempo
 Route::post('userweb2','Auth\RegisterController@register');
+
+// creando los modelos -- variantes
+Route::post('modelo1','ModeloProducto@modelo1');
+Route::post('modelo2','ModeloProducto@modelo2');
+Route::post('modelo3','ModeloProducto@modelo3');
 
 Route::get('/', function () {
     return view('welcome');
