@@ -65,6 +65,8 @@ Route::get('allvideosbusqueda','VideosController@showallvideosbusqueda');
 
 // vimeo
 Route::get('vimeo','VideosController@show3');
+Route::get('onevimeo','VideosController@onevimeo');
+Route::post('crearonevimeo','VideosController@crearonevimeo');
 Route::get('allvimeo','VideosController@show4');
 Route::post('crearvideovimeo','VideosController@crearvideovimeo');
 
@@ -80,6 +82,7 @@ Route::get('transaccion','TransaccionController@show');
 
 // servicios de optionvaluemix
 Route::get('optionvaluemixall','OptionvaluemixController@show');
+Route::get('lecturamodelos','adminProductController@optionvaluemixall_admin');
 Route::get('optionvaluemix','OptionvaluemixController@show2');
 
 // servicios de paymentmodel
@@ -93,9 +96,13 @@ Route::post('leerUsuario','Auth\LoginController@leerUsuario');
 Route::post('userweb2','Auth\RegisterController@register');
 
 // creando los modelos -- variantes
-Route::post('modelo1','ModeloProducto@modelo1');
-Route::post('modelo2','ModeloProducto@modelo2');
-Route::post('modelo3','ModeloProducto@modelo3');
+Route::post('escrituramodelo1','ModeloProducto@modelo1');
+Route::post('escrituramodelo2','ModeloProducto@modelo2');
+Route::post('escrituramodelo3','ModeloProducto@modelo3');
+
+//
+Route::put('updateOptionsValues','UpdateOptionsValuesController@updateOptionsValues');
+Route::put('escrituramodelo0','UpdateOptionsValuesController@updateOptionsValues0');
 
 Route::get('/', function () {
     return view('welcome');

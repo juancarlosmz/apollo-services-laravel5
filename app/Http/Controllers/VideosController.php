@@ -164,7 +164,7 @@ class VideosController extends Controller{
 
         $lat = $request->lat;
         $lng = $request->lng;
-        $distance = 1000; // Sitios que se encuentren en un radio de 1000KM
+        $distance = 10000; // Sitios que se encuentren en un radio de 1000KM
         $id_firebase = $request->id_firebase;
         $idioma = $request->language;
         $page = $request->page;
@@ -291,7 +291,7 @@ class VideosController extends Controller{
 
         $lat = $request->lat;
         $lng = $request->lng;
-        $distance = 1000; // Sitios que se encuentren en un radio de 1000KM
+        $distance = 10000; // Sitios que se encuentren en un radio de 1000KM
         $id_firebase = $request->id_firebase;
         $idioma = $request->language;
         $page = $request->page;
@@ -424,7 +424,7 @@ class VideosController extends Controller{
 
         $lat = $request->lat;
         $lng = $request->lng;
-        $distance = 1000; // Sitios que se encuentren en un radio de 1000KM
+        $distance = 10000; // Sitios que se encuentren en un radio de 1000KM
         $id_firebase = $request->id_firebase;
         $idioma = $request->language;
 
@@ -639,7 +639,7 @@ class VideosController extends Controller{
 
     public function show2_1($idservicio,$idioma){
         // vimeo conexion
-        $client = new Vimeo("775c22cdd9fc4659ce5e3d8b60983ea494d5f651", "EvxF5vcxCLcmYDoTdY14Je1WuDG7fVolfehkXEOi9ZtkWr1NXcrCwmdlrOSYj6uwKwkFvZGHRXmHW8NzD8ub5wNItDpoQBbs062//5f+8FNWUnXU2sxrOJrdjMUpqJ9a", "34e804b0ff350b833660a390045af984");
+        $client = new Vimeo("775c22cdd9fc4659ce5e3d8b60983ea494d5f651", "EvxF5vcxCLcmYDoTdY14Je1WuDG7fVolfehkXEOi9ZtkWr1NXcrCwmdlrOSYj6uwKwkFvZGHRXmHW8NzD8ub5wNItDpoQBbs062//5f+8FNWUnXU2sxrOJrdjMUpqJ9a", "9a57070414710af364956455ef45bd7f");
         $response = $client->request('/me/videos', array(), 'GET');
         $datavimeo = $response['body']['data'];
         $arrayVimeo = array();
@@ -713,16 +713,25 @@ class VideosController extends Controller{
     }
     public function show3(){
         //$client = new Vimeo("{client_id}", "{client_secret}", "{access_token}");
-        $client = new Vimeo("775c22cdd9fc4659ce5e3d8b60983ea494d5f651", "EvxF5vcxCLcmYDoTdY14Je1WuDG7fVolfehkXEOi9ZtkWr1NXcrCwmdlrOSYj6uwKwkFvZGHRXmHW8NzD8ub5wNItDpoQBbs062//5f+8FNWUnXU2sxrOJrdjMUpqJ9a", "b82b33c946fd004af2f67b4fa9198f1d");
+        $client = new Vimeo("775c22cdd9fc4659ce5e3d8b60983ea494d5f651", "EvxF5vcxCLcmYDoTdY14Je1WuDG7fVolfehkXEOi9ZtkWr1NXcrCwmdlrOSYj6uwKwkFvZGHRXmHW8NzD8ub5wNItDpoQBbs062//5f+8FNWUnXU2sxrOJrdjMUpqJ9a", "9a57070414710af364956455ef45bd7f");
         $response = $client->request('/me/videos', array(), 'GET');
         $data = $response['body']['data'];
+        
         $arrayVimeo = array();
         $name = '';
+        $duration = '';
         $link = '';
         $link2 = '';
         $link3 = '';
         $size = '';
+        // new data
+        $width = '';
+        $height = '';
+        //return response()->json($data);
+
         foreach ($data as $keyvim => $vim) {
+
+            $duration = $data[$keyvim]['duration'];
             $name = $data[$keyvim]['name'];
             $link = $data[$keyvim]['link'];
             foreach ($data[$keyvim]['files'] as $keyfile => $file) {
@@ -730,28 +739,120 @@ class VideosController extends Controller{
                     if($data[$keyvim]['files'][$keyfile]['height'] == 960){
                         $link2 = $data[$keyvim]['files'][$keyfile]['link'];
                         $size = round(($data[$keyvim]['files'][$keyfile]['size']/1024/1024), 2).'M';
+                        $width = $data[$keyvim]['files'][$keyfile]['height'];
+                        $height = $data[$keyvim]['files'][$keyfile]['width'];
                     }
                 }
             }
             foreach ($data[$keyvim]['pictures']['sizes'] as $keypic => $pic) {
                 if($data[$keyvim]['pictures']['sizes'][$keypic]['width'] == 1280 and $data[$keyvim]['pictures']['sizes'][$keypic]['height'] == 720){
                     $link3 = $data[$keyvim]['pictures']['sizes'][$keypic]['link'];
+                    $linksplit = explode('_',$link3);
+                    $link3_1 = $linksplit[0].'.jpg';
+
                 }
             }
             $objectvimeo = (object) [
                 'name' => $name,
                 'link' => $link,
-                'link2' => $link2,
+                'urlvideo' => $link2,
                 'size' => $size,
-                'link3' => $link3,
+                'videosize' => $duration,
+                'urlimagen' => $link3_1,
+                'width' => $width,
+                'height' => $height,
             ];
             array_push($arrayVimeo, $objectvimeo);  
         }
         return response()->json($arrayVimeo);
     }
+    public function onevimeo(Request $request){
+
+        $request->validate([
+            'video_id' => 'required',
+            'active' => 'required',
+            'time' => 'required',
+        ]);
+        $video_id = $request->video_id;
+        $active = $request->active;
+        $time = $request->time;
+        
+        $idvimeo = '/videos/450262517';
+        $active = true;
+        $time = 10;
+        //$client = new Vimeo("{client_id}", "{client_secret}", "{access_token}");
+        $client = new Vimeo("775c22cdd9fc4659ce5e3d8b60983ea494d5f651", "EvxF5vcxCLcmYDoTdY14Je1WuDG7fVolfehkXEOi9ZtkWr1NXcrCwmdlrOSYj6uwKwkFvZGHRXmHW8NzD8ub5wNItDpoQBbs062//5f+8FNWUnXU2sxrOJrdjMUpqJ9a", "9a57070414710af364956455ef45bd7f");
+        $response = $client->request('/me'.$idvimeo, array(), 'GET');
+        $responsepictures = $client->request('/videos/'.$video_id.'/pictures', array(), 'GET');
+
+        $duration = $response['body']['name'];
+        return response()->json($responsepictures);
+       
+        $arrayVimeo = array();
+        $name = '';
+        $link = '';
+        $link2 = '';
+        $link3 = '';
+        $link3_1 = '';
+        $size = '';
+        // new data
+        $width = '';
+        $height = '';
+
+        $name = $response['body']['name'];
+        $link = $response['body']['link'];
+        foreach ($response['body']['files'] as $keyfile => $file) {
+            if($response['body']['files'][$keyfile]['quality'] != 'hls'){
+                if($response['body']['files'][$keyfile]['height'] == 960){
+                    $link2 = $response['body']['files'][$keyfile]['link'];
+                    $size = round(($response['body']['files'][$keyfile]['size']/1024/1024), 2).'M';
+                    $width = $response['body']['files'][$keyfile]['width'];
+                    $height = $response['body']['files'][$keyfile]['height'];
+                }
+            }
+        }
+        foreach ($response['body']['pictures']['sizes'] as $keypic => $pic) {
+            if($response['body']['pictures']['sizes'][$keypic]['width'] == 1280 and $response['body']['pictures']['sizes'][$keypic]['height'] == 720){
+                $link3 = $response['body']['pictures']['sizes'][$keypic]['link'];
+                $linksplit = explode('_',$link3);
+                $link3_1 = $linksplit[0].'.jpg';
+            }
+        }
+        $objectvimeo = (object) [
+            'name' => $name,
+            'link' => $link,
+            'urlvideo' => $link2,
+            'size' => $size,
+            'videosize' => $duration,
+            'urlimagen' => $link3_1,
+            'width' => $width,
+            'height' => $height,
+        ];
+        array_push($arrayVimeo, $objectvimeo);  
+        
+        return response()->json($arrayVimeo[0]);
+
+    }
+    public function crearonevimeo(Request $request){
+
+        $request->validate([
+            'video_id' => 'required',
+        ]);
+        $video_id = $request->video_id;
+       
+        //$client = new Vimeo("{client_id}", "{client_secret}", "{access_token}");
+        $client = new Vimeo("775c22cdd9fc4659ce5e3d8b60983ea494d5f651", "EvxF5vcxCLcmYDoTdY14Je1WuDG7fVolfehkXEOi9ZtkWr1NXcrCwmdlrOSYj6uwKwkFvZGHRXmHW8NzD8ub5wNItDpoQBbs062//5f+8FNWUnXU2sxrOJrdjMUpqJ9a", "9a57070414710af364956455ef45bd7f");
+        
+        $responsepictures = $client->request('/videos/'.$video_id.'/pictures', array('time' => '0'), 'POST');
+        $newlink = $responsepictures['body']['sizes'][0]['link'];
+        return response()->json($newlink);
+       
+       
+
+    }
     public function show4(){
         //$client = new Vimeo("{client_id}", "{client_secret}", "{access_token}");
-        $client = new Vimeo("775c22cdd9fc4659ce5e3d8b60983ea494d5f651", "EvxF5vcxCLcmYDoTdY14Je1WuDG7fVolfehkXEOi9ZtkWr1NXcrCwmdlrOSYj6uwKwkFvZGHRXmHW8NzD8ub5wNItDpoQBbs062//5f+8FNWUnXU2sxrOJrdjMUpqJ9a", "b82b33c946fd004af2f67b4fa9198f1d");
+        $client = new Vimeo("775c22cdd9fc4659ce5e3d8b60983ea494d5f651", "EvxF5vcxCLcmYDoTdY14Je1WuDG7fVolfehkXEOi9ZtkWr1NXcrCwmdlrOSYj6uwKwkFvZGHRXmHW8NzD8ub5wNItDpoQBbs062//5f+8FNWUnXU2sxrOJrdjMUpqJ9a", "9a57070414710af364956455ef45bd7f");
         $response = $client->request('/me/videos', array(), 'GET');
         $data = $response['body']['data'];
         return response()->json($data);
@@ -849,7 +950,7 @@ class VideosController extends Controller{
 
         $lat = $request->lat;
         $lng = $request->lng;
-        $distance = 1000; // Sitios que se encuentren en un radio de 1000KM
+        $distance = 10000; // Sitios que se encuentren en un radio de 1000KM
         $idservicio = $request->idService;
         $idioma = $request->language;
         $page = $request->page;
@@ -973,7 +1074,7 @@ class VideosController extends Controller{
 
         $lat = $request->lat;
         $lng = $request->lng;
-        $distance = 1000; // Sitios que se encuentren en un radio de 1000KM
+        $distance = 10000; // Sitios que se encuentren en un radio de 1000KM
         $idservicio = $request->idService;
         $idioma = $request->language;
         $page = $request->page;
@@ -1088,28 +1189,144 @@ class VideosController extends Controller{
 
         $request->validate([
             'rutavimeo' => 'required',
-            'nombrevideo' => 'required',   
+            'titlevideo' => 'required', 
+            'id_firebase' => 'required', 
+            'VideoDescription' => 'required', 
         ]);
         $rutavimeo = $request->rutavimeo;
-        $nombrevideo = $request->nombrevideo;
+        $titlevideo = $request->titlevideo;
+        $id_firebase = $request->id_firebase;
+        $VideoDescription = $request->VideoDescription;
 
         // vimeo conexion
-        $client = new Vimeo("775c22cdd9fc4659ce5e3d8b60983ea494d5f651", "EvxF5vcxCLcmYDoTdY14Je1WuDG7fVolfehkXEOi9ZtkWr1NXcrCwmdlrOSYj6uwKwkFvZGHRXmHW8NzD8ub5wNItDpoQBbs062//5f+8FNWUnXU2sxrOJrdjMUpqJ9a", "34e804b0ff350b833660a390045af984");
+        $client = new Vimeo("775c22cdd9fc4659ce5e3d8b60983ea494d5f651", "EvxF5vcxCLcmYDoTdY14Je1WuDG7fVolfehkXEOi9ZtkWr1NXcrCwmdlrOSYj6uwKwkFvZGHRXmHW8NzD8ub5wNItDpoQBbs062//5f+8FNWUnXU2sxrOJrdjMUpqJ9a", "9a57070414710af364956455ef45bd7f");
 
-/*
-        $response = $client->request('/me/videos', array(), 'GET');
-        $datavimeo = $response['body']['data'];
-        $arrayVimeo = array();
-*/
 
         // With parameters.
-        $response = $client->upload($rutavimeo, [
-            'name' => $nombrevideo,
+        $responseID = $client->upload($rutavimeo, [
+            'name' => $titlevideo,
             'privacy' => [
-                'view' => 'anybody'
+                'view' => 'unlisted'
             ]
-        ]);
+        ]);    
+        $idvimeo = $responseID;
+        $despertar = false;
+        $newlink = '';
+        ini_set('max_execution_time', 180);
+        do {
+            sleep(10);
+            $response = $client->request('/me'.$idvimeo, array(), 'GET');
+            if($response['body']['duration'] != 0){
+                foreach ($response['body']['files'] as $keyfile => $file) {
+                    if($response['body']['files'][$keyfile]['quality'] != 'hls'){
+                        if($response['body']['files'][$keyfile]['height'] == 960){
+                            if($response['body']['files'][$keyfile]['link'] != ''){
+                                $despertar = true;
+                                $responsepictures = $client->request($response['body']['uri'].'/pictures', array('time' => '0'), 'POST');
+                                $newlink = $responsepictures['body']['sizes'][0]['link'];
+                            }else{
+                                $despertar = false;
+                            }
+                        }
+                    }
+                }  
+            }else{
+                $despertar = false;
+            }    
 
-        return response()->json($response);
+        }while ($despertar == false);
+
+        $data = $response['body']['name'];
+        $duration = $response['body']['duration'];
+
+        $arrayVimeo = array();
+        $name = '';
+        $link = '';
+        $link2 = '';
+        $link3 = '';
+        $link3_1 = '';
+        $size = '';
+        // new data
+        $width = '';
+        $height = '';
+
+        $name = $response['body']['name'];
+        $link = $response['body']['link'];
+        foreach ($response['body']['files'] as $keyfile => $file) {
+            if($response['body']['files'][$keyfile]['quality'] != 'hls'){
+                if($response['body']['files'][$keyfile]['height'] == 960){
+                    $link2 = $response['body']['files'][$keyfile]['link'];
+                    $size = round(($response['body']['files'][$keyfile]['size']/1024/1024), 2).'M';
+                    $width = $response['body']['files'][$keyfile]['width'];
+                    $height = $response['body']['files'][$keyfile]['height'];
+                }
+            }
+        }
+        foreach ($response['body']['pictures']['sizes'] as $keypic => $pic) {
+            if($response['body']['pictures']['sizes'][$keypic]['width'] == 1280 and $response['body']['pictures']['sizes'][$keypic]['height'] == 720){
+                $link3 = $response['body']['pictures']['sizes'][$keypic]['link'];
+                //$linksplit = explode('_',$link3);
+                $linksplit = explode('_',$newlink);
+                $link3_1 = $linksplit[0].'.jpg';
+            }
+        }
+        $objectvimeo = (object) [
+            'name' => $name,
+            'link' => $link,
+            'urlvideo' => $link2,
+            'size' => $size,
+            'videosize' => $duration,
+            'urlimagen' => $link3_1,
+            'width' => $width,
+            'height' => $height,
+        ];
+        array_push($arrayVimeo, $objectvimeo);  
+
+        if(count($arrayVimeo) == 1){
+            $name = $arrayVimeo[0]->name;
+            $link = $arrayVimeo[0]->link;
+            $urlvideo = $arrayVimeo[0]->urlvideo;
+            $size = $arrayVimeo[0]->size;
+            $videosize = $arrayVimeo[0]->videosize;
+            $urlimagen = $arrayVimeo[0]->urlimagen;
+            $width = $arrayVimeo[0]->width;
+            $height = $arrayVimeo[0]->height;
+            
+            $userId = DB::table('usuarios')
+                ->select('usuarios.id as userId')
+                ->where('usuarios.id_firebase', $id_firebase)
+                ->get();
+            if(count($userId) != 0){
+                $results = DB::select( DB::raw('INSERT INTO videos (id, userId, titlevideo,VideoDescription, precio, urlvideo,urlimagen,urlvideo_width,urlvideo_height,urlimage_width,urlimage_height,idpmtype,id_product_stripe,public,videosize,created_at, updated_at) VALUES (NULL, "'.$userId[0]->userId.'","'.$titlevideo.'","'.$VideoDescription.'",NULL,"'.$urlvideo.'","'.$urlimagen.'","'.$width.'","'.$height.'","'.$width.'","'.$height.'",1,NULL,0,"'.$videosize.'",now(), now());') );
+                $idvideo = DB::getPdo()->lastInsertId();
+                return response()->json([
+                    'idvideo' => $idvideo,
+                  ]);
+            }else{
+                return response()->json(false);
+            }
+        }   
+    }
+
+    public function crearvideovimeo2(Request $request){
+        $request->validate([
+            'rutavimeo' => 'required',
+            'titlevideo' => 'required', 
+            'id_firebase' => 'required', 
+            'VideoDescription' => 'required', 
+        ]);
+        $rutavimeo = $request->rutavimeo;
+        $titlevideo = $request->titlevideo;
+        $id_firebase = $request->id_firebase;
+        $VideoDescription = $request->VideoDescription;
+        $userId = DB::table('usuarios')
+                ->select('usuarios.id as userId')
+                ->where('usuarios.id_firebase', $id_firebase)
+                ->get();
+            if(count($userId) != 0){
+                    return response()->json($userId[0]->userId);
+            }else{
+                return response()->json(false);
+            }  
     }
 }

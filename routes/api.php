@@ -34,37 +34,37 @@ Route::post('/plans', function (Request $request) {
         ], 401);
       }
     }
-        Stripe::setApiKey('sk_test_3RP8Mjx7h8bC6IeVcqOaSDFA');
-        //crear
-        $product = Product::create(array(
-            'name' => $request->product_name,
-            'type' => 'service',
+    Stripe::setApiKey('sk_test_3RP8Mjx7h8bC6IeVcqOaSDFA');
+    //crear
+    $product = Product::create(array(
+        'name' => $request->product_name,
+        'type' => 'service',
+    ));
+    // si posee multiples optionces de membresia day, week, month or year
+    $data = [];
+    //simular optiones
+    $opciones = $request->items;
+    $items = [];
+    foreach ($opciones as $option) {
+        $price = Price::create(array(
+            'unit_amount' => $option['price'],
+            'currency'    => 'usd',
+            'recurring'   => [
+                'interval'       => $option['interval'],
+                'interval_count' => $option['interval_count'],
+            ],
+            'product'     => $product->id
         ));
-        // si posee multiples optionces de membresia day, week, month or year
-        $data = [];
-        //simular optiones
-        $opciones = $request->items;
-        $items = [];
-        foreach ($opciones as $option) {
-            $price = Price::create(array(
-                'unit_amount' => $option['price'],
-                'currency'    => 'usd',
-                'recurring'   => [
-                    'interval'       => $option['interval'],
-                    'interval_count' => $option['interval_count'],
-                ],
-                'product'     => $product->id
-            ));
-            $items[] = [
-                "id" => $price->id
-            ];
-            usleep(500000);
-        }
-        $data = [
-            'product' => $product->id,
-            'tarifas' => $items,
+        $items[] = [
+            "id" => $price->id
         ];
-        return \Response::json($data, 200);
+        usleep(500000);
+    }
+    $data = [
+        'product' => $product->id,
+        'tarifas' => $items,
+    ];
+    return \Response::json($data, 200);
   } catch (\Exception $ex) {
         $msg['response'] = [
             "error" => $ex->getMessage()

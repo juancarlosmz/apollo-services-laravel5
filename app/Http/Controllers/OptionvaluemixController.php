@@ -7,8 +7,8 @@ class OptionvaluemixController extends Controller{
         $request->validate([
             'idvideo' => 'required',
         ]);
-        $idvideo = $request->idvideo;  
-        $results = DB::select( DB::raw('select videos.titlevideo,optionvaluemix.idvideo as idvideo, optionvaluemix.id,options.id as option_keys_id, options.descripcion as option_keys,optionvalue.id as option_values_id, optionvalue.descripcion as option_values, optionvaluemix.precio, optionvaluemix.img, optionvaluemix.sort,optionvaluemix.id_item_stripe,videos.id_product_stripe from optionvaluemix INNER JOIN options ON options.id = optionvaluemix.idoption INNER JOIN optionvalue ON optionvalue.id = optionvaluemix.idoptionvalue INNER JOIN videos ON videos.id = optionvaluemix.idvideo where optionvaluemix.idvideo = "'.$idvideo.'" ORDER by optionvaluemix.sort ASC, options.descripcion ASC'));
+        $idvideo = $request->idvideo;    
+        $results = DB::select( DB::raw('select videos.idpmtype,videos.titlevideo,optionvaluemix.idvideo as idvideo, optionvaluemix.id,options.id as option_keys_id, options.descripcion as option_keys,optionvalue.id as option_values_id, optionvalue.descripcion as option_values, optionvaluemix.precio, optionvaluemix.img, optionvaluemix.sort,optionvaluemix.id_item_stripe,optionvaluemix.interval_stripe,optionvaluemix.interval_count_stripe,videos.id_product_stripe from optionvaluemix INNER JOIN options ON options.id = optionvaluemix.idoption INNER JOIN optionvalue ON optionvalue.id = optionvaluemix.idoptionvalue INNER JOIN videos ON videos.id = optionvaluemix.idvideo where optionvaluemix.idvideo = "'.$idvideo.'" ORDER by optionvaluemix.sort ASC, options.descripcion ASC'));
 
         if($results){
             $arrayData = array();
@@ -21,6 +21,7 @@ class OptionvaluemixController extends Controller{
                 $id_product_stripe = $results[$i]->id_product_stripe;
                 $mytitlevideo = strip_tags($results[$i]->titlevideo);
                 $object = (object) [
+                    'idpmtype' => $results[$i]->idpmtype,
                     'id' => $results[$i]->id,
                     'id_product_stripe' => $results[$i]->id_product_stripe,
                     'option_keys' => $results[$i]->option_keys,
@@ -30,10 +31,14 @@ class OptionvaluemixController extends Controller{
                     'precio' => $results[$i]->precio,
                     'img' => $results[$i]->img,
                     'id_item_stripe' => $results[$i]->id_item_stripe,
+                    'interval_stripe' => $results[$i]->interval_stripe,
+                    'interval_count_stripe' => $results[$i]->interval_count_stripe,
                     'titlevideo' => str_replace('<br>',' ',$results[$i]->titlevideo),
+                    'sort' => $results[$i]->sort,
                 ];
                 array_push($arrayData, $object);
             }
+
             $idval=0;
             $descripcion = '';
             $descripcion_id = '';
@@ -42,7 +47,6 @@ class OptionvaluemixController extends Controller{
             $titlevideo = '';
             $arrayData3 = array();
             // primera opcion
-
             for($i = 0; $i<count($arrayData); $i++){
                 if($arrayData[$i]->id == $idval){
                     $descripcion = $descripcion.' / '.$arrayData[$i]->option_values.'<br><small>'.$titlevideo.'</small>';
@@ -78,21 +82,18 @@ class OptionvaluemixController extends Controller{
                     array_push($arrayData3, $object3);
                 }
             }
-            
             // lista simple_1
             $arrayData4 = array();
             for($i = 0; $i<count($arrayData); $i++){
                 array_push($arrayData4, $arrayData[$i]->option_keys);
             }
             $lista_simple = array_values(array_unique($arrayData4));
-
             // lista simple_2
             $arrayData5 = array();
             for($i = 0; $i<count($arrayData); $i++){
                 array_push($arrayData5, $arrayData[$i]->option_keys_id);
             }
             $lista_simple2 = array_values(array_unique($arrayData5));
-            
             $object2 = (object) [
                 'idvideo' => $idvideo,
                 'id_product_stripe' => $id_product_stripe,
@@ -102,6 +103,7 @@ class OptionvaluemixController extends Controller{
             ];
             array_push($arrayData2, $object2);
             return response()->json($arrayData2); 
+
         }else{
             $status = (object) [
                 'status' => false
@@ -109,7 +111,7 @@ class OptionvaluemixController extends Controller{
             return response()->json($status); 
         }
     }
-
+    
     public function show2(Request $request){
         $request->validate([
             'idvideo' => 'required',
