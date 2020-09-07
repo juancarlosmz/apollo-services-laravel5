@@ -73,6 +73,7 @@ class UsuarioController extends Controller{
                 $objeto2 = Business::create([
                     'userId' => $userId[0]->userId,
                     'descripcion' => $request->nombreservicio,
+                    'direccion' => $request->direccion,
                     'details' => $request->details,
                     'lat' => $request->lat,
                     'lng' => $request->lng,
@@ -98,6 +99,7 @@ class UsuarioController extends Controller{
                     ->where('userId', $userId[0]->userId)
                     ->update([
                     'descripcion' => $request->nombreservicio,
+                    'direccion' => $request->direccion,
                     'details' => $request->details,
                     'lat' => $request->lat,
                     'lng' => $request->lng,
@@ -177,13 +179,21 @@ class UsuarioController extends Controller{
         }  
         
     }
-    public function show2($id_firebase){
+    public function show2($id_firebase,$phone){
         $userId = DB::table('usuarios')
                 ->select('usuarios.id_firebase as firebaseId','usuarios.fecha_nacimiento','usuarios.sexo','usuarios.idiomaId')
                 ->where('usuarios.id_firebase', $id_firebase)
                 ->get();
         if(count($userId) == 0){  
-            return response()->json(false);
+                $userphone = DB::table('usuarios')
+                ->select('usuarios.id as userId')
+                ->where('usuarios.phone', $phone)
+                ->get();
+          if(count($userphone) == 0){
+               return response()->json(false);
+            }else{
+               return $userphone;
+        }
         }else{
             return $userId;
         }   

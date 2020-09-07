@@ -10,14 +10,21 @@ class adminProductController extends Controller{
         $request->validate([
             'idvideo' => 'required',
             'model' => 'required',
+            'idioma' => 'required',
         ]);
         $idvideo = $request->idvideo;
         $model = $request->model;  
+        $idioma = $request->idioma;  
 
         $results = DB::select( DB::raw('select videos.idpmtype,videos.titlevideo,optionvaluemix.idvideo as idvideo, optionvaluemix.id,options.id as option_keys_id, options.descripcion as option_keys,optionvalue.id as option_values_id, optionvalue.descripcion as option_values, optionvaluemix.precio, optionvaluemix.img, optionvaluemix.sort,optionvaluemix.id_item_stripe,optionvaluemix.interval_stripe,optionvaluemix.interval_count_stripe,videos.id_product_stripe from optionvaluemix INNER JOIN options ON options.id = optionvaluemix.idoption INNER JOIN optionvalue ON optionvalue.id = optionvaluemix.idoptionvalue INNER JOIN videos ON videos.id = optionvaluemix.idvideo where optionvaluemix.idvideo = "'.$idvideo.'" ORDER by optionvaluemix.sort ASC, options.descripcion ASC'));
 
-        $results2 = DB::select( DB::raw('SELECT videos.titlevideo, videos.VideoDescription,videos.urlimagen,videos.public,videos.idpmtype from videos WHERE videos.id = "'.$idvideo.'";'));
+/*
+        $results2 = DB::select( DB::raw('SELECT videos.titlevideo, videos.VideoDescription,videos.urlimagen,videos.public,videos.idpmtype from videos  WHERE videos.id = "'.$idvideo.'";'));
+*/
 
+        $results2 = DB::select( DB::raw('SELECT (SELECT traduccions.descripcion from traduccions INNER JOIN valuesidiomas ON valuesidiomas.id = traduccions.validiomaId INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE valuesidiomas.id = videos.public and idiomas.id = "'.$idioma.'") as traduccionpublic,videos.public, videos.titlevideo, videos.VideoDescription,videos.urlimagen,videos.idpmtype from videos WHERE videos.id = "'.$idvideo.'";'));
+
+  
         if($results){
             $arrayData = array();
             $arrayData2 = array();
@@ -46,6 +53,7 @@ class adminProductController extends Controller{
                 ];
                 array_push($arrayData, $object);
             }
+            //return response()->json($arrayData); 
 
             if($model == 0){
                 $idval=0;
@@ -62,6 +70,7 @@ class adminProductController extends Controller{
                         $descripcion_id = $descripcion_id.' / '.$arrayData[$i]->option_values_id;
                         $object3 = (object) [
                             'id' => $idval,
+                            'sort' => $sort,
                             'descripcion' => $descripcion,
                             'descripcion_id' => $descripcion_id,
                             'precio' => $precio,
@@ -71,6 +80,7 @@ class adminProductController extends Controller{
                         array_push($arrayData3, $object3);
                     }
                     $idval = $arrayData[$i]->id;
+                    $sort = $arrayData[$i]->sort;
                     $descripcion = $arrayData[$i]->option_values;
                     $descripcion_id = $arrayData[$i]->option_values_id;
                     $precio = $arrayData[$i]->precio;
@@ -108,45 +118,54 @@ class adminProductController extends Controller{
                     'idvideo' => $idvideo,
                     'id_product_stripe' => $id_product_stripe,
                     'options_keys' => $lista_simple,
-                    'options_keys_id' => $lista_simple2,
                     'options_values' => $arrayData3,
                 ];
                 array_push($arrayData2, $object2);
-                return response()->json($arrayData2); 
+                return response()->json($arrayData2[0]); 
             }else if($model == 1){
+
+                //return response()->json($arrayData); 
                 $arraymodelo1_1 = array();
                 $arraymodelo1_2 = array();
 
                 for($i = 0; $i<count($arrayData); $i++){
                     array_push($arraymodelo1_1, $arrayData[$i]->option_keys.'@#@'.$arrayData[$i]->option_keys_id);
-                    array_push($arraymodelo1_2, $arrayData[$i]->option_values.'@#@'.$arrayData[$i]->option_keys_id);
+                    array_push($arraymodelo1_2, $arrayData[$i]->option_values.'@#@'.$arrayData[$i]->option_keys_id.'@#@'.$arrayData[$i]->option_values_id);
                 }
                 $resultadomodelo1_1 = array_unique($arraymodelo1_1);
                 $resultadomodelo1_2 = array_unique($arraymodelo1_2);
-                //return response()->json($resultadomodelo1_1); 
+                //
                 $ultimoresultado = array();
-
+                 
                 for($i = 0; $i<count($resultadomodelo1_1); $i++){
                     $mymodels1[$i] = explode("@#@", $resultadomodelo1_1[$i]);
                     $optionss = '';
+                    $optionssid = '';
+                    
                     for($z = 0; $z<count(array_values($resultadomodelo1_2)); $z++){
                         
                         $mymodels2[$z] = explode("@#@", array_values($resultadomodelo1_2)[$z]);
-
+                        
                         if($mymodels1[$i][1] == $mymodels2[$z][1]){
                             if($optionss != ''){
-                                $optionss = $mymodels2[$z][0].','.$optionss;
+                                $optionss = $optionss.','.$mymodels2[$z][0];
+                                $optionssid = $optionssid.','.$mymodels2[$z][2];
                             }else{
                                 $optionss = $mymodels2[$z][0];
+                                $optionssid = $mymodels2[$z][2];
                             }
                         }  
                     }
+                    
                     $model1 = (object) [
                         'optionkey' => $mymodels1[$i][0],
+                        'optionkeyid' => intval($mymodels1[$i][1]),
                         'optionval' => $optionss,
+                        'optionvalid' => $optionssid,
                     ];
                     array_push($ultimoresultado, $model1);
                 }
+                //return response()->json($ultimoresultado);
                 $ultimoresultadoficial = array();
                 $model1last = (object) [
                     'videoid' => $idvideo,
@@ -201,7 +220,10 @@ class adminProductController extends Controller{
         }else{
             $status = (object) [
                 'videoprofile' => $results2,
-                'status' => false
+                'idvideo' => $idvideo,
+                'id_product_stripe' => null,
+                'options_keys' => null,
+                'options_values' => null,
             ];
             return response()->json($status); 
         }

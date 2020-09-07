@@ -213,7 +213,8 @@ class VideosController extends Controller{
                 ->where('usuarios.id_firebase', $id_firebase)
                 ->get();       
         if($userId){
-            $results = DB::select( DB::raw('select (SELECT count(*) from transaccions INNER JOIN pagos ON pagos.ordenId = transaccions.ordenId WHERE transaccions.userIdvendedor = usuarios.id) as sales, videos.id,videos.titlevideo,videos.VideoDescription,videos.urlvideo,videos.urlimagen,videos.urlvideo_width,videos.urlvideo_height,videos.urlimage_width,videos.urlimage_height,videos.precio,videos.userId,videos.idpmtype,businesses.descripcion as business,businesses.direccion,businesses.pais,serviciousuarios.serviciosId,traduccions.descripcion as traduccionservicio, usuarios.id_firebase as firebaseid, usuarios.photo,businesses.logo , (6371 * ACOS(SIN(RADIANS(businesses.lat)) * SIN(RADIANS(' . $lat . '))+ COS(RADIANS(businesses.lng - ' . $lng . '))* COS(RADIANS(businesses.lat))* COS(RADIANS(' . $lat . ')))) AS distance FROM videos INNER JOIN usuarios ON usuarios.id = videos.userId INNER JOIN businesses ON businesses.userId = usuarios.id INNER JOIN serviciousuarios ON serviciousuarios.userId = usuarios.id INNER JOIN servicios ON servicios.id = serviciousuarios.serviciosId INNER JOIN valuesidiomas ON valuesidiomas.id = servicios.validiomaId INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE videos.public = 1 and idiomas.id = "'.$idioma.'" and videos.userId = "'.$userId[0]->userId.'" and (businesses.lat BETWEEN ' . $min_lat. ' AND ' . $max_lat . ') AND (businesses.lng BETWEEN '.$min_lng.' AND '.$max_lng.') HAVING distance  < '.$distance.' ORDER BY distance ASC LIMIT '.$myitems.' OFFSET '.$pageskip.';') );     
+
+            $results = DB::select( DB::raw('select (SELECT traduccions.descripcion from traduccions INNER JOIN valuesidiomas ON valuesidiomas.id = traduccions.validiomaId INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE valuesidiomas.id = 21 and idiomas.id = "'.$idioma.'") as traduccionpublic,(SELECT count(*) from transaccions INNER JOIN pagos ON pagos.ordenId = transaccions.ordenId WHERE transaccions.userIdvendedor = usuarios.id) as sales, videos.id,videos.titlevideo,videos.VideoDescription,videos.urlvideo,videos.urlimagen,videos.urlvideo_width,videos.urlvideo_height,videos.urlimage_width,videos.urlimage_height,videos.precio,videos.userId,videos.idpmtype,businesses.descripcion as business,businesses.direccion,businesses.pais,serviciousuarios.serviciosId,traduccions.descripcion as traduccionservicio, usuarios.id_firebase as firebaseid, usuarios.photo,businesses.logo , (6371 * ACOS(SIN(RADIANS(businesses.lat)) * SIN(RADIANS(' . $lat . '))+ COS(RADIANS(businesses.lng - ' . $lng . '))* COS(RADIANS(businesses.lat))* COS(RADIANS(' . $lat . ')))) AS distance FROM videos INNER JOIN usuarios ON usuarios.id = videos.userId INNER JOIN businesses ON businesses.userId = usuarios.id INNER JOIN serviciousuarios ON serviciousuarios.userId = usuarios.id INNER JOIN servicios ON servicios.id = serviciousuarios.serviciosId INNER JOIN valuesidiomas ON valuesidiomas.id = servicios.validiomaId INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE videos.public = 21 and idiomas.id = "'.$idioma.'" and videos.userId = "'.$userId[0]->userId.'" and (businesses.lat BETWEEN ' . $min_lat. ' AND ' . $max_lat . ') AND (businesses.lng BETWEEN '.$min_lng.' AND '.$max_lng.') HAVING distance  < '.$distance.' ORDER BY distance ASC LIMIT '.$myitems.' OFFSET '.$pageskip.';') );     
 
             $nextpage = $page+1;
             // next - previous
@@ -237,6 +238,7 @@ class VideosController extends Controller{
                         if($results[$i]->firebaseid == $key){
 
                             $object = (object) [
+                                'traduccionpublic' => $results[$i]->traduccionpublic,
                                 'sales' => $results[$i]->sales,
                                 'videoid' => $results[$i]->id,
                                 'titlevideo' => $results[$i]->titlevideo,
@@ -277,6 +279,81 @@ class VideosController extends Controller{
             }          
         }             
     }
+
+    public function shownewadmin(Request $request){
+
+        $request->validate([
+            'items' => 'required',
+            'page' => 'required',
+            'id_firebase' => 'required',
+            'language' => 'required',
+        ]);
+
+        $id_firebase = $request->id_firebase;
+        $idioma = $request->language;
+        $page = $request->page;
+        $items = $request->items;
+
+        //paginacion
+        $pageskip = intval($page) - 1;
+        $items = intval($items);
+
+        //$items = $items + 1;
+        $myitems = $items + 1;
+        $pageskip = ($pageskip) * $items;
+
+        $userId = DB::table('usuarios')
+                ->select('usuarios.id as userId')
+                ->where('usuarios.id_firebase', $id_firebase)
+                ->get();       
+        if($userId){
+            $results = DB::select( DB::raw('select (SELECT traduccions.descripcion from traduccions INNER JOIN valuesidiomas ON valuesidiomas.id = traduccions.validiomaId INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE valuesidiomas.id = 21 and idiomas.id = "'.$idioma.'") as traduccionpublic,videos.id,videos.titlevideo,videos.VideoDescription,videos.urlvideo,videos.urlimagen,videos.urlvideo_width,videos.urlvideo_height,videos.urlimage_width,videos.urlimage_height,videos.precio,videos.userId,videos.idpmtype,serviciousuarios.serviciosId,traduccions.descripcion as traduccionservicio, usuarios.id_firebase as firebaseid FROM videos INNER JOIN usuarios ON usuarios.id = videos.userId INNER JOIN businesses ON businesses.userId = usuarios.id INNER JOIN serviciousuarios ON serviciousuarios.userId = usuarios.id INNER JOIN servicios ON servicios.id = serviciousuarios.serviciosId INNER JOIN valuesidiomas ON valuesidiomas.id = servicios.validiomaId INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE idiomas.id = "'.$idioma.'" and videos.userId = "'.$userId[0]->userId.'" ORDER BY videos.id DESC, videos.public DESC LIMIT '.$myitems.' OFFSET '.$pageskip.';') );
+
+            $nextpage = $page+1;
+            // next - previous
+            $next = '';
+            if(count($results) > $items){
+                $next = 'https://apolomultimedia-server4.info/videosbyuseradmin?items='.$items.'&page='.$nextpage.'&id_firebase='.$id_firebase.'&language='.$idioma;
+            } 
+            unset($results[$items]); 
+            
+            if($results){
+                $arrayData = array();
+                $arrayDataandcount = array();
+                for($i = 0; $i<count($results); $i++){ 
+
+                        $object = (object) [
+                            'traduccionpublic' => $results[$i]->traduccionpublic,
+                            'videoid' => $results[$i]->id,
+                            'titlevideo' => $results[$i]->titlevideo,
+                            'VideoDescription' => $results[$i]->VideoDescription,
+                            'urlvideo' => $results[$i]->urlvideo,
+                            'urlimagen' => $results[$i]->urlimagen,
+                            'urlvideo_width' => $results[$i]->urlvideo_width,
+                            'urlvideo_height' => $results[$i]->urlvideo_height,
+                            'urlimage_width' => $results[$i]->urlimage_width,
+                            'urlimage_height' => $results[$i]->urlimage_height,
+                            'precio' => $results[$i]->precio,
+                            'idpmtype' => $results[$i]->idpmtype,
+                            'serviciosId' => $results[$i]->serviciosId,
+                            'traduccionservicio' => $results[$i]->traduccionservicio,
+                        ];
+                        array_push($arrayData, $object);
+
+                }
+                $lastobject = (object) [
+                    'page' => $page,
+                    'next' => $next,
+                    'results' => $arrayData,
+                ];
+                array_push($arrayDataandcount,$lastobject);
+                return response()->json($arrayDataandcount[0]); 
+            }else{
+                return response()->json(false);
+            }          
+        }             
+    }
+
 
     public function shownewbusqueda(Request $request){
 
@@ -342,7 +419,8 @@ class VideosController extends Controller{
                 ->where('usuarios.id_firebase', $id_firebase)
                 ->get();
         if($userId){
-            $results = DB::select( DB::raw('select (SELECT count(*) from transaccions INNER JOIN pagos ON pagos.ordenId = transaccions.ordenId WHERE transaccions.userIdvendedor = usuarios.id) as sales, videos.id,videos.titlevideo,videos.VideoDescription,videos.urlvideo,videos.urlimagen,videos.urlvideo_width,videos.urlvideo_height,videos.urlimage_width,videos.urlimage_height,videos.precio,videos.userId,videos.idpmtype,businesses.descripcion as business,businesses.direccion,businesses.pais,serviciousuarios.serviciosId,traduccions.descripcion as traduccionservicio, usuarios.id_firebase as firebaseid, usuarios.photo,businesses.logo, (6371 * ACOS(SIN(RADIANS(businesses.lat)) * SIN(RADIANS(' . $lat . '))+ COS(RADIANS(businesses.lng - ' . $lng . '))* COS(RADIANS(businesses.lat))* COS(RADIANS(' . $lat . ')))) AS distance FROM videos INNER JOIN usuarios ON usuarios.id = videos.userId INNER JOIN businesses ON businesses.userId = usuarios.id INNER JOIN serviciousuarios ON serviciousuarios.userId = usuarios.id INNER JOIN servicios ON servicios.id = serviciousuarios.serviciosId INNER JOIN valuesidiomas ON valuesidiomas.id = servicios.validiomaId INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE videos.public = 1 and idiomas.id = "'.$idioma.'" and videos.userId = "'.$userId[0]->userId.'" and (businesses.lat BETWEEN ' . $min_lat. ' AND ' . $max_lat . ') AND (businesses.lng BETWEEN '.$min_lng.' AND '.$max_lng.') HAVING distance  < '.$distance.' and concat(videos.titlevideo," ",businesses.descripcion," ", videos.VideoDescription) like "%'.$busqueda.'%" ORDER BY distance ASC;' ));     
+
+            $results = DB::select( DB::raw('select (SELECT traduccions.descripcion from traduccions INNER JOIN valuesidiomas ON valuesidiomas.id = traduccions.validiomaId INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE valuesidiomas.id = 21 and idiomas.id = "'.$idioma.'") as traduccionpublic, (SELECT count(*) from transaccions INNER JOIN pagos ON pagos.ordenId = transaccions.ordenId WHERE transaccions.userIdvendedor = usuarios.id) as sales, videos.id,videos.titlevideo,videos.VideoDescription,videos.urlvideo,videos.urlimagen,videos.urlvideo_width,videos.urlvideo_height,videos.urlimage_width,videos.urlimage_height,videos.precio,videos.userId,videos.idpmtype,businesses.descripcion as business,businesses.direccion,businesses.pais,serviciousuarios.serviciosId,traduccions.descripcion as traduccionservicio, usuarios.id_firebase as firebaseid, usuarios.photo,businesses.logo, (6371 * ACOS(SIN(RADIANS(businesses.lat)) * SIN(RADIANS(' . $lat . '))+ COS(RADIANS(businesses.lng - ' . $lng . '))* COS(RADIANS(businesses.lat))* COS(RADIANS(' . $lat . ')))) AS distance FROM videos INNER JOIN usuarios ON usuarios.id = videos.userId INNER JOIN businesses ON businesses.userId = usuarios.id INNER JOIN serviciousuarios ON serviciousuarios.userId = usuarios.id INNER JOIN servicios ON servicios.id = serviciousuarios.serviciosId INNER JOIN valuesidiomas ON valuesidiomas.id = servicios.validiomaId INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE videos.public = 21 and idiomas.id = "'.$idioma.'" and videos.userId = "'.$userId[0]->userId.'" and (businesses.lat BETWEEN ' . $min_lat. ' AND ' . $max_lat . ') AND (businesses.lng BETWEEN '.$min_lng.' AND '.$max_lng.') HAVING distance  < '.$distance.' and concat(videos.titlevideo," ",businesses.descripcion," ", videos.VideoDescription) like "%'.$busqueda.'%" ORDER BY distance ASC;' ));     
             
             if($results){
                 // firebase presence
@@ -359,6 +437,7 @@ class VideosController extends Controller{
                             if($busqueda != ''){
 
                                 $object = (object) [
+                                    'traduccionpublic' => $results[$i]->traduccionpublic,
                                     'sales' => $results[$i]->sales,
                                     'videoid' => $results[$i]->id,
                                     'titlevideo' => $results[$i]->titlevideo,
@@ -741,6 +820,11 @@ class VideosController extends Controller{
                         $size = round(($data[$keyvim]['files'][$keyfile]['size']/1024/1024), 2).'M';
                         $width = $data[$keyvim]['files'][$keyfile]['height'];
                         $height = $data[$keyvim]['files'][$keyfile]['width'];
+                    }else if($data[$keyvim]['files'][$keyfile]['height'] == 640){
+                        $link2 = $data[$keyvim]['files'][$keyfile]['link'];
+                        $size = round(($data[$keyvim]['files'][$keyfile]['size']/1024/1024), 2).'M';
+                        $width = $data[$keyvim]['files'][$keyfile]['height'];
+                        $height = $data[$keyvim]['files'][$keyfile]['width'];
                     }
                 }
             }
@@ -804,6 +888,11 @@ class VideosController extends Controller{
         foreach ($response['body']['files'] as $keyfile => $file) {
             if($response['body']['files'][$keyfile]['quality'] != 'hls'){
                 if($response['body']['files'][$keyfile]['height'] == 960){
+                    $link2 = $response['body']['files'][$keyfile]['link'];
+                    $size = round(($response['body']['files'][$keyfile]['size']/1024/1024), 2).'M';
+                    $width = $response['body']['files'][$keyfile]['width'];
+                    $height = $response['body']['files'][$keyfile]['height'];
+                }else if($response['body']['files'][$keyfile]['height'] == 640){
                     $link2 = $response['body']['files'][$keyfile]['link'];
                     $size = round(($response['body']['files'][$keyfile]['size']/1024/1024), 2).'M';
                     $width = $response['body']['files'][$keyfile]['width'];
@@ -993,9 +1082,9 @@ class VideosController extends Controller{
         $myitems = $items + 1;
         $pageskip = ($pageskip) * $items;
         if($idservicio == 0){
-            $results = DB::select( DB::raw('select (SELECT count(*) from transaccions INNER JOIN pagos ON pagos.ordenId = transaccions.ordenId WHERE transaccions.userIdvendedor = usuarios.id) as sales, videos.id,videos.titlevideo,videos.VideoDescription,videos.urlvideo,videos.urlimagen,videos.urlvideo_width,videos.urlvideo_height,videos.urlimage_width,videos.urlimage_height,videos.precio,videos.userId,videos.idpmtype,businesses.descripcion as business,businesses.direccion,businesses.pais, serviciousuarios.serviciosId,traduccions.descripcion as traduccionservicio, usuarios.id_firebase as firebaseid, usuarios.photo,businesses.logo, (6371 * ACOS(SIN(RADIANS(businesses.lat)) * SIN(RADIANS(' . $lat . '))+ COS(RADIANS(businesses.lng - ' . $lng . '))* COS(RADIANS(businesses.lat))* COS(RADIANS(' . $lat . ')))) AS distance FROM videos INNER JOIN usuarios ON usuarios.id = videos.userId INNER JOIN businesses ON businesses.userId = usuarios.id INNER JOIN serviciousuarios ON serviciousuarios.userId = usuarios.id INNER JOIN servicios ON servicios.id = serviciousuarios.serviciosId INNER JOIN valuesidiomas ON valuesidiomas.id = servicios.validiomaId INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE videos.public = 1 and idiomas.id = "'.$idioma.'" and (businesses.lat BETWEEN ' . $min_lat. ' AND ' . $max_lat . ') AND (businesses.lng BETWEEN '.$min_lng.' AND '.$max_lng.') HAVING distance  < '.$distance.' ORDER BY distance ASC LIMIT '.$myitems.' OFFSET '.$pageskip.';')); 
+            $results = DB::select( DB::raw('select (SELECT traduccions.descripcion from traduccions INNER JOIN valuesidiomas ON valuesidiomas.id = traduccions.validiomaId INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE valuesidiomas.id = 21 and idiomas.id = "'.$idioma.'") as traduccionpublic,(SELECT count(*) from transaccions INNER JOIN pagos ON pagos.ordenId = transaccions.ordenId WHERE transaccions.userIdvendedor = usuarios.id) as sales, videos.id,videos.titlevideo,videos.VideoDescription,videos.urlvideo,videos.urlimagen,videos.urlvideo_width,videos.urlvideo_height,videos.urlimage_width,videos.urlimage_height,videos.precio,videos.userId,videos.idpmtype,businesses.descripcion as business,businesses.direccion,businesses.pais, serviciousuarios.serviciosId,traduccions.descripcion as traduccionservicio, usuarios.id_firebase as firebaseid, usuarios.photo,businesses.logo, (6371 * ACOS(SIN(RADIANS(businesses.lat)) * SIN(RADIANS(' . $lat . '))+ COS(RADIANS(businesses.lng - ' . $lng . '))* COS(RADIANS(businesses.lat))* COS(RADIANS(' . $lat . ')))) AS distance FROM videos INNER JOIN usuarios ON usuarios.id = videos.userId INNER JOIN businesses ON businesses.userId = usuarios.id INNER JOIN serviciousuarios ON serviciousuarios.userId = usuarios.id INNER JOIN servicios ON servicios.id = serviciousuarios.serviciosId INNER JOIN valuesidiomas ON valuesidiomas.id = servicios.validiomaId INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE videos.public = 21 and idiomas.id = "'.$idioma.'" and (businesses.lat BETWEEN ' . $min_lat. ' AND ' . $max_lat . ') AND (businesses.lng BETWEEN '.$min_lng.' AND '.$max_lng.') HAVING distance  < '.$distance.' ORDER BY distance ASC LIMIT '.$myitems.' OFFSET '.$pageskip.';')); 
         }else{ 
-            $results = DB::select( DB::raw('select (SELECT count(*) from transaccions INNER JOIN pagos ON pagos.ordenId = transaccions.ordenId WHERE transaccions.userIdvendedor = usuarios.id) as sales, videos.id,videos.titlevideo,videos.VideoDescription,videos.urlvideo,videos.urlimagen,videos.urlvideo_width,videos.urlvideo_height,videos.urlimage_width,videos.urlimage_height,videos.precio,videos.userId,videos.idpmtype,businesses.descripcion as business,businesses.direccion,businesses.pais, serviciousuarios.serviciosId,traduccions.descripcion as traduccionservicio, usuarios.id_firebase as firebaseid, usuarios.photo,businesses.logo, (6371 * ACOS(SIN(RADIANS(businesses.lat)) * SIN(RADIANS(' . $lat . '))+ COS(RADIANS(businesses.lng - ' . $lng . '))* COS(RADIANS(businesses.lat))* COS(RADIANS(' . $lat . ')))) AS distance FROM videos INNER JOIN usuarios ON usuarios.id = videos.userId INNER JOIN businesses ON businesses.userId = usuarios.id INNER JOIN serviciousuarios ON serviciousuarios.userId = usuarios.id INNER JOIN servicios ON servicios.id = serviciousuarios.serviciosId INNER JOIN valuesidiomas ON valuesidiomas.id = servicios.validiomaId INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE videos.public = 1 and idiomas.id = "'.$idioma.'" and serviciousuarios.serviciosId = "'.$idservicio.'" and (businesses.lat BETWEEN ' . $min_lat. ' AND ' . $max_lat . ') AND (businesses.lng BETWEEN ' . $min_lng. ' AND ' . $max_lng. ') HAVING distance  < ' . $distance . ' ORDER BY distance ASC LIMIT '.$myitems.' OFFSET '.$pageskip.';'));   
+            $results = DB::select( DB::raw('select (SELECT traduccions.descripcion from traduccions INNER JOIN valuesidiomas ON valuesidiomas.id = traduccions.validiomaId INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE valuesidiomas.id = 21 and idiomas.id = "'.$idioma.'") as traduccionpublic, (SELECT count(*) from transaccions INNER JOIN pagos ON pagos.ordenId = transaccions.ordenId WHERE transaccions.userIdvendedor = usuarios.id) as sales, videos.id,videos.titlevideo,videos.VideoDescription,videos.urlvideo,videos.urlimagen,videos.urlvideo_width,videos.urlvideo_height,videos.urlimage_width,videos.urlimage_height,videos.precio,videos.userId,videos.idpmtype,businesses.descripcion as business,businesses.direccion,businesses.pais, serviciousuarios.serviciosId,traduccions.descripcion as traduccionservicio, usuarios.id_firebase as firebaseid, usuarios.photo,businesses.logo, (6371 * ACOS(SIN(RADIANS(businesses.lat)) * SIN(RADIANS(' . $lat . '))+ COS(RADIANS(businesses.lng - ' . $lng . '))* COS(RADIANS(businesses.lat))* COS(RADIANS(' . $lat . ')))) AS distance FROM videos INNER JOIN usuarios ON usuarios.id = videos.userId INNER JOIN businesses ON businesses.userId = usuarios.id INNER JOIN serviciousuarios ON serviciousuarios.userId = usuarios.id INNER JOIN servicios ON servicios.id = serviciousuarios.serviciosId INNER JOIN valuesidiomas ON valuesidiomas.id = servicios.validiomaId INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE videos.public = 21 and idiomas.id = "'.$idioma.'" and serviciousuarios.serviciosId = "'.$idservicio.'" and (businesses.lat BETWEEN ' . $min_lat. ' AND ' . $max_lat . ') AND (businesses.lng BETWEEN ' . $min_lng. ' AND ' . $max_lng. ') HAVING distance  < ' . $distance . ' ORDER BY distance ASC LIMIT '.$myitems.' OFFSET '.$pageskip.';'));   
         }
 
         //  
@@ -1021,6 +1110,7 @@ class VideosController extends Controller{
                 foreach ($presence as $key => $prec) { 
                     if($results[$i]->firebaseid == $key){
                         $object = (object) [
+                            'traduccionpublic' => $results[$i]->traduccionpublic,
                             'sales' => $results[$i]->sales,
                             'videoid' => $results[$i]->id,
                             'titlevideo' => $results[$i]->titlevideo,
@@ -1112,9 +1202,9 @@ class VideosController extends Controller{
         $database = $firebase->getDatabase();
         // 
         if($idservicio == 0){
-            $results = DB::select( DB::raw('select (SELECT count(*) from transaccions INNER JOIN pagos ON pagos.ordenId = transaccions.ordenId WHERE transaccions.userIdvendedor = usuarios.id) as sales, videos.id,videos.titlevideo,videos.VideoDescription,videos.urlvideo,videos.urlimagen,videos.urlvideo_width,videos.urlvideo_height,videos.urlimage_width,videos.urlimage_height,videos.precio,videos.userId,videos.idpmtype,businesses.descripcion as business,businesses.direccion,businesses.pais, serviciousuarios.serviciosId,traduccions.descripcion as traduccionservicio, usuarios.id_firebase as firebaseid, usuarios.photo,businesses.logo, (6371 * ACOS(SIN(RADIANS(businesses.lat)) * SIN(RADIANS(' . $lat . '))+ COS(RADIANS(businesses.lng - ' . $lng . '))* COS(RADIANS(businesses.lat))* COS(RADIANS(' . $lat . ')))) AS distance FROM videos INNER JOIN usuarios ON usuarios.id = videos.userId INNER JOIN businesses ON businesses.userId = usuarios.id INNER JOIN serviciousuarios ON serviciousuarios.userId = usuarios.id INNER JOIN servicios ON servicios.id = serviciousuarios.serviciosId INNER JOIN valuesidiomas ON valuesidiomas.id = servicios.validiomaId INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE videos.public = 1 and idiomas.id = "'.$idioma.'" and (businesses.lat BETWEEN ' . $min_lat. ' AND ' . $max_lat . ') AND (businesses.lng BETWEEN '.$min_lng.' AND '.$max_lng.') HAVING distance  < '.$distance.' and concat(videos.titlevideo," ",businesses.descripcion," ", videos.VideoDescription) like "%'.$busqueda.'%" ORDER BY distance ASC;')); 
+            $results = DB::select( DB::raw('select (SELECT traduccions.descripcion from traduccions INNER JOIN valuesidiomas ON valuesidiomas.id = traduccions.validiomaId INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE valuesidiomas.id = 21 and idiomas.id = "'.$idioma.'") as traduccionpublic,(SELECT count(*) from transaccions INNER JOIN pagos ON pagos.ordenId = transaccions.ordenId WHERE transaccions.userIdvendedor = usuarios.id) as sales, videos.id,videos.titlevideo,videos.VideoDescription,videos.urlvideo,videos.urlimagen,videos.urlvideo_width,videos.urlvideo_height,videos.urlimage_width,videos.urlimage_height,videos.precio,videos.userId,videos.idpmtype,businesses.descripcion as business,businesses.direccion,businesses.pais, serviciousuarios.serviciosId,traduccions.descripcion as traduccionservicio, usuarios.id_firebase as firebaseid, usuarios.photo,businesses.logo, (6371 * ACOS(SIN(RADIANS(businesses.lat)) * SIN(RADIANS(' . $lat . '))+ COS(RADIANS(businesses.lng - ' . $lng . '))* COS(RADIANS(businesses.lat))* COS(RADIANS(' . $lat . ')))) AS distance FROM videos INNER JOIN usuarios ON usuarios.id = videos.userId INNER JOIN businesses ON businesses.userId = usuarios.id INNER JOIN serviciousuarios ON serviciousuarios.userId = usuarios.id INNER JOIN servicios ON servicios.id = serviciousuarios.serviciosId INNER JOIN valuesidiomas ON valuesidiomas.id = servicios.validiomaId INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE videos.public = 21 and idiomas.id = "'.$idioma.'" and (businesses.lat BETWEEN ' . $min_lat. ' AND ' . $max_lat . ') AND (businesses.lng BETWEEN '.$min_lng.' AND '.$max_lng.') HAVING distance  < '.$distance.' and concat(videos.titlevideo," ",businesses.descripcion," ", videos.VideoDescription) like "%'.$busqueda.'%" ORDER BY distance ASC;')); 
         }else{ 
-            $results = DB::select( DB::raw('select (SELECT count(*) from transaccions INNER JOIN pagos ON pagos.ordenId = transaccions.ordenId WHERE transaccions.userIdvendedor = usuarios.id) as sales, videos.id,videos.titlevideo,videos.VideoDescription,videos.urlvideo,videos.urlimagen,videos.urlvideo_width,videos.urlvideo_height,videos.urlimage_width,videos.urlimage_height,videos.precio,videos.userId,videos.idpmtype,businesses.descripcion as business,businesses.direccion,businesses.pais, serviciousuarios.serviciosId,traduccions.descripcion as traduccionservicio, usuarios.id_firebase as firebaseid, usuarios.photo,businesses.logo, (6371 * ACOS(SIN(RADIANS(businesses.lat)) * SIN(RADIANS(' . $lat . '))+ COS(RADIANS(businesses.lng - ' . $lng . '))* COS(RADIANS(businesses.lat))* COS(RADIANS(' . $lat . ')))) AS distance FROM videos INNER JOIN usuarios ON usuarios.id = videos.userId INNER JOIN businesses ON businesses.userId = usuarios.id INNER JOIN serviciousuarios ON serviciousuarios.userId = usuarios.id INNER JOIN servicios ON servicios.id = serviciousuarios.serviciosId INNER JOIN valuesidiomas ON valuesidiomas.id = servicios.validiomaId INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE videos.public = 1 and idiomas.id = "'.$idioma.'" and serviciousuarios.serviciosId = "'.$idservicio.'" and (businesses.lat BETWEEN ' . $min_lat. ' AND ' . $max_lat . ') AND (businesses.lng BETWEEN ' . $min_lng. ' AND ' . $max_lng. ') HAVING distance  < ' . $distance . ' and concat(videos.titlevideo," ",businesses.descripcion," ", videos.VideoDescription) like "%'.$busqueda.'%" ORDER BY distance ASC;'));   
+            $results = DB::select( DB::raw('select (SELECT traduccions.descripcion from traduccions INNER JOIN valuesidiomas ON valuesidiomas.id = traduccions.validiomaId INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE valuesidiomas.id = 21 and idiomas.id = "'.$idioma.'") as traduccionpublic, (SELECT count(*) from transaccions INNER JOIN pagos ON pagos.ordenId = transaccions.ordenId WHERE transaccions.userIdvendedor = usuarios.id) as sales, videos.id,videos.titlevideo,videos.VideoDescription,videos.urlvideo,videos.urlimagen,videos.urlvideo_width,videos.urlvideo_height,videos.urlimage_width,videos.urlimage_height,videos.precio,videos.userId,videos.idpmtype,businesses.descripcion as business,businesses.direccion,businesses.pais, serviciousuarios.serviciosId,traduccions.descripcion as traduccionservicio, usuarios.id_firebase as firebaseid, usuarios.photo,businesses.logo, (6371 * ACOS(SIN(RADIANS(businesses.lat)) * SIN(RADIANS(' . $lat . '))+ COS(RADIANS(businesses.lng - ' . $lng . '))* COS(RADIANS(businesses.lat))* COS(RADIANS(' . $lat . ')))) AS distance FROM videos INNER JOIN usuarios ON usuarios.id = videos.userId INNER JOIN businesses ON businesses.userId = usuarios.id INNER JOIN serviciousuarios ON serviciousuarios.userId = usuarios.id INNER JOIN servicios ON servicios.id = serviciousuarios.serviciosId INNER JOIN valuesidiomas ON valuesidiomas.id = servicios.validiomaId INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE videos.public = 21 and idiomas.id = "'.$idioma.'" and serviciousuarios.serviciosId = "'.$idservicio.'" and (businesses.lat BETWEEN ' . $min_lat. ' AND ' . $max_lat . ') AND (businesses.lng BETWEEN ' . $min_lng. ' AND ' . $max_lng. ') HAVING distance  < ' . $distance . ' and concat(videos.titlevideo," ",businesses.descripcion," ", videos.VideoDescription) like "%'.$busqueda.'%" ORDER BY distance ASC;'));   
         }
 
         if($results){
@@ -1131,6 +1221,7 @@ class VideosController extends Controller{
                     if($results[$i]->firebaseid == $key){
                         if($busqueda != ''){
                             $object = (object) [
+                                'traduccionpublic' => $results[$i]->traduccionpublic,
                                 'sales' => $results[$i]->sales,
                                 'videoid' => $results[$i]->id,
                                 'titlevideo' => $results[$i]->titlevideo,
@@ -1186,7 +1277,8 @@ class VideosController extends Controller{
     }
 
     public function crearvideovimeo(Request $request){
-
+        ini_set('max_execution_time', 300);
+        ini_set('default_socket_timeout', 300);
         $request->validate([
             'rutavimeo' => 'required',
             'titlevideo' => 'required', 
@@ -1201,25 +1293,41 @@ class VideosController extends Controller{
         // vimeo conexion
         $client = new Vimeo("775c22cdd9fc4659ce5e3d8b60983ea494d5f651", "EvxF5vcxCLcmYDoTdY14Je1WuDG7fVolfehkXEOi9ZtkWr1NXcrCwmdlrOSYj6uwKwkFvZGHRXmHW8NzD8ub5wNItDpoQBbs062//5f+8FNWUnXU2sxrOJrdjMUpqJ9a", "9a57070414710af364956455ef45bd7f");
 
+        $responseID = $client->request(
+            '/me/videos',
+            [
+                'name'=>$titlevideo,
+                'privacy' => [
+                    'view' => 'unlisted'
+                ],
+                'upload' => [
+                    'approach' => 'pull',
+                    'link' => $rutavimeo
+                ],
+            ],
+            'POST'
+        );
 
-        // With parameters.
-        $responseID = $client->upload($rutavimeo, [
-            'name' => $titlevideo,
-            'privacy' => [
-                'view' => 'unlisted'
-            ]
-        ]);    
-        $idvimeo = $responseID;
+        $idvimeo = $responseID['body']['uri'];
         $despertar = false;
         $newlink = '';
-        ini_set('max_execution_time', 180);
+        
         do {
             sleep(10);
             $response = $client->request('/me'.$idvimeo, array(), 'GET');
             if($response['body']['duration'] != 0){
+
                 foreach ($response['body']['files'] as $keyfile => $file) {
                     if($response['body']['files'][$keyfile]['quality'] != 'hls'){
                         if($response['body']['files'][$keyfile]['height'] == 960){
+                            if($response['body']['files'][$keyfile]['link'] != ''){
+                                $despertar = true;
+                                $responsepictures = $client->request($response['body']['uri'].'/pictures', array('time' => '0'), 'POST');
+                                $newlink = $responsepictures['body']['sizes'][0]['link'];
+                            }else{
+                                $despertar = false;
+                            }
+                        }else if($response['body']['files'][$keyfile]['height'] == 640){
                             if($response['body']['files'][$keyfile]['link'] != ''){
                                 $despertar = true;
                                 $responsepictures = $client->request($response['body']['uri'].'/pictures', array('time' => '0'), 'POST');
@@ -1255,6 +1363,11 @@ class VideosController extends Controller{
         foreach ($response['body']['files'] as $keyfile => $file) {
             if($response['body']['files'][$keyfile]['quality'] != 'hls'){
                 if($response['body']['files'][$keyfile]['height'] == 960){
+                    $link2 = $response['body']['files'][$keyfile]['link'];
+                    $size = round(($response['body']['files'][$keyfile]['size']/1024/1024), 2).'M';
+                    $width = $response['body']['files'][$keyfile]['width'];
+                    $height = $response['body']['files'][$keyfile]['height'];
+                }else if($response['body']['files'][$keyfile]['height'] == 640){
                     $link2 = $response['body']['files'][$keyfile]['link'];
                     $size = round(($response['body']['files'][$keyfile]['size']/1024/1024), 2).'M';
                     $width = $response['body']['files'][$keyfile]['width'];
@@ -1297,7 +1410,7 @@ class VideosController extends Controller{
                 ->where('usuarios.id_firebase', $id_firebase)
                 ->get();
             if(count($userId) != 0){
-                $results = DB::select( DB::raw('INSERT INTO videos (id, userId, titlevideo,VideoDescription, precio, urlvideo,urlimagen,urlvideo_width,urlvideo_height,urlimage_width,urlimage_height,idpmtype,id_product_stripe,public,videosize,created_at, updated_at) VALUES (NULL, "'.$userId[0]->userId.'","'.$titlevideo.'","'.$VideoDescription.'",NULL,"'.$urlvideo.'","'.$urlimagen.'","'.$width.'","'.$height.'","'.$width.'","'.$height.'",1,NULL,0,"'.$videosize.'",now(), now());') );
+                $results = DB::select( DB::raw('INSERT INTO videos (id, userId, titlevideo,VideoDescription, precio, urlvideo,urlimagen,urlvideo_width,urlvideo_height,urlimage_width,urlimage_height,idpmtype,id_product_stripe,public,videosize,created_at, updated_at) VALUES (NULL, "'.$userId[0]->userId.'","'.$titlevideo.'","'.$VideoDescription.'",NULL,"'.$urlvideo.'","'.$urlimagen.'","'.$width.'","'.$height.'","'.$width.'","'.$height.'",1,NULL,22,"'.$videosize.'",now(), now());') );
                 $idvideo = DB::getPdo()->lastInsertId();
                 return response()->json([
                     'idvideo' => $idvideo,

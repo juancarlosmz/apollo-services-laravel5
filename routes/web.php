@@ -7,7 +7,7 @@ Route::get('serviciovideo/{idioma}','ServicioController@show2');
 
 // servicios usuario
 Route::get('usuarioservicio/{id_firebase}','UsuarioController@show');
-Route::get('listarusuario/{id_firebase}','UsuarioController@show2');
+Route::get('listarusuario/{id_firebase}/{phone}','UsuarioController@show2');
 Route::post('usuario','UsuarioController@create');
 Route::post('usuarioservicio','UsuarioController@create2');
 Route::put('usuario/{id_firebase}','UsuarioController@update');
@@ -59,6 +59,7 @@ Route::get('getBoundaries','VideosController@getBoundaries');
 // new get allvideos
 Route::get('profile','VideosController@showordenespagadas');
 Route::get('videosbyuser','VideosController@shownew');
+Route::get('videosbyuseradmin','VideosController@shownewadmin');
 Route::get('videosbusqueda','VideosController@shownewbusqueda');
 Route::get('allvideos','VideosController@showallvideos');
 Route::get('allvideosbusqueda','VideosController@showallvideosbusqueda');
@@ -88,21 +89,19 @@ Route::get('optionvaluemix','OptionvaluemixController@show2');
 // servicios de paymentmodel
 Route::get('paymentmodeltype','PaymentmodelController@show');
 
-// servicios para la app web
-Route::post('userweb','Auth\RegisterController@create');
-Route::post('login','Auth\LoginController@login');
-Route::post('leerUsuario','Auth\LoginController@leerUsuario');
-// en proceso toma tiempo
-Route::post('userweb2','Auth\RegisterController@register');
-
 // creando los modelos -- variantes
 Route::post('escrituramodelo1','ModeloProducto@modelo1');
 Route::post('escrituramodelo2','ModeloProducto@modelo2');
 Route::post('escrituramodelo3','ModeloProducto@modelo3');
 
 //
-Route::put('updateOptionsValues','UpdateOptionsValuesController@updateOptionsValues');
+Route::post('addoptionvaluemix','UpdateOptionsValuesController@addoptionvaluemix');
+Route::post('addoptions','UpdateOptionsValuesController@addoptions');
 Route::put('escrituramodelo0','UpdateOptionsValuesController@updateOptionsValues0');
+Route::put('updatevideopublic','UpdateOptionsValuesController@updatevideopublic');
+
+// iso countries
+Route::get('isocountries/{iso_country}','isocountriesController@isocountries');
 
 Route::get('/', function () {
     return view('welcome');
