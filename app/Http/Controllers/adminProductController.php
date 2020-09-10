@@ -16,15 +16,11 @@ class adminProductController extends Controller{
         $model = $request->model;  
         $idioma = $request->idioma;  
 
-        $results = DB::select( DB::raw('select videos.idpmtype,videos.titlevideo,optionvaluemix.idvideo as idvideo, optionvaluemix.id,options.id as option_keys_id, options.descripcion as option_keys,optionvalue.id as option_values_id, optionvalue.descripcion as option_values, optionvaluemix.precio, optionvaluemix.img, optionvaluemix.sort,optionvaluemix.id_item_stripe,optionvaluemix.interval_stripe,optionvaluemix.interval_count_stripe,videos.id_product_stripe from optionvaluemix INNER JOIN options ON options.id = optionvaluemix.idoption INNER JOIN optionvalue ON optionvalue.id = optionvaluemix.idoptionvalue INNER JOIN videos ON videos.id = optionvaluemix.idvideo where optionvaluemix.idvideo = "'.$idvideo.'" ORDER by optionvaluemix.sort ASC, options.descripcion ASC'));
-
-/*
-        $results2 = DB::select( DB::raw('SELECT videos.titlevideo, videos.VideoDescription,videos.urlimagen,videos.public,videos.idpmtype from videos  WHERE videos.id = "'.$idvideo.'";'));
-*/
+        $results = DB::select( DB::raw('select videos.idpmtype,videos.titlevideo,optionvaluemix.idvideo as idvideo, optionvaluemix.id,options.id as option_keys_id, options.descripcion as option_keys,optionvalue.id as option_values_id, optionvalue.descripcion as option_values, optionvaluemix.precio, optionvaluemix.img, optionvaluemix.sort,optionvaluemix.id_item_stripe,optionvaluemix.interval_stripe,optionvaluemix.interval_count_stripe,videos.id_product_stripe from optionvaluemix INNER JOIN options ON options.id = optionvaluemix.idoption INNER JOIN optionvalue ON optionvalue.id = optionvaluemix.idoptionvalue INNER JOIN videos ON videos.id = optionvaluemix.idvideo where optionvaluemix.idvideo = "'.$idvideo.'" ORDER by optionvaluemix.sort ASC,options.id ASC, options.descripcion ASC'));
 
         $results2 = DB::select( DB::raw('SELECT (SELECT traduccions.descripcion from traduccions INNER JOIN valuesidiomas ON valuesidiomas.id = traduccions.validiomaId INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE valuesidiomas.id = videos.public and idiomas.id = "'.$idioma.'") as traduccionpublic,videos.public, videos.titlevideo, videos.VideoDescription,videos.urlimagen,videos.idpmtype from videos WHERE videos.id = "'.$idvideo.'";'));
 
-  
+        //return response()->json($results);
         if($results){
             $arrayData = array();
             $arrayData2 = array();
@@ -66,6 +62,7 @@ class adminProductController extends Controller{
                 // primera opcion
                 for($i = 0; $i<count($arrayData); $i++){
                     if($arrayData[$i]->id == $idval){
+                        
                         $descripcion = $descripcion.' / '.$arrayData[$i]->option_values;
                         $descripcion_id = $descripcion_id.' / '.$arrayData[$i]->option_values_id;
                         $object3 = (object) [
@@ -78,6 +75,28 @@ class adminProductController extends Controller{
                             'id_item_stripe' => $id_item_stripe,
                         ];
                         array_push($arrayData3, $object3);
+                        
+                        /*
+                        for($j = 0; $j<count($arrayData); $j++){
+                            
+                            if( $arrayData[$i]->id == $arrayData[$j]->id && $idval == $arrayData[$j]->id){
+
+                                $descripcion = $descripcion.' / '.$arrayData[$i]->option_values.' / '.$arrayData[$j]->option_values;
+                                $descripcion_id = $descripcion_id.' / '.$arrayData[$i]->option_values_id.' / '.$arrayData[$j]->option_values_id;
+                                $object3 = (object) [
+                                    'id' => $idval,
+                                    'sort' => $sort,
+                                    'descripcion' => $descripcion,
+                                    'descripcion_id' => $descripcion_id,
+                                    'precio' => $precio,
+                                    'img' => $img,
+                                    'id_item_stripe' => $id_item_stripe,
+                                ];
+                                array_push($arrayData3, $object3);
+                            }
+                        }
+                        */
+                        
                     }
                     $idval = $arrayData[$i]->id;
                     $sort = $arrayData[$i]->sort;
@@ -88,6 +107,7 @@ class adminProductController extends Controller{
                     $titlevideo = $arrayData[$i]->titlevideo;
                     $id_item_stripe = $arrayData[$i]->id_item_stripe;
                 }
+                //return response()->json($arrayData3); 
                 if(count($arrayData3) == 0){
                     for($i = 0; $i<count($arrayData); $i++){
                         $object3 = (object) [
@@ -127,16 +147,17 @@ class adminProductController extends Controller{
                 //return response()->json($arrayData); 
                 $arraymodelo1_1 = array();
                 $arraymodelo1_2 = array();
-
+                //return response()->json($arrayData);
                 for($i = 0; $i<count($arrayData); $i++){
                     array_push($arraymodelo1_1, $arrayData[$i]->option_keys.'@#@'.$arrayData[$i]->option_keys_id);
                     array_push($arraymodelo1_2, $arrayData[$i]->option_values.'@#@'.$arrayData[$i]->option_keys_id.'@#@'.$arrayData[$i]->option_values_id);
                 }
+
                 $resultadomodelo1_1 = array_unique($arraymodelo1_1);
                 $resultadomodelo1_2 = array_unique($arraymodelo1_2);
                 //
                 $ultimoresultado = array();
-                 
+                
                 for($i = 0; $i<count($resultadomodelo1_1); $i++){
                     $mymodels1[$i] = explode("@#@", $resultadomodelo1_1[$i]);
                     $optionss = '';

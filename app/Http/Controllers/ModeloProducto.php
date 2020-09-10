@@ -27,7 +27,7 @@ class ModeloProducto extends Controller{
         $validateoptions = DB::select( DB::raw('select distinct optionvaluemix.idvideo from optionvaluemix where optionvaluemix.idvideo = "'.$videoid.'";'));
 
         //return response()->json(count($validateoptions));
-        
+        $contadoropcions = count($option);
         if(count($validateoptions) == 0){
             $updateidmtype = DB::select( DB::raw('UPDATE videos SET idpmtype = "'.$payment_type.'", updated_at = now() WHERE videos.id = "'.$videoid.'";') );
 
@@ -49,29 +49,97 @@ class ModeloProducto extends Controller{
                 }
             }
             $arrayData2 = array();
-            for($i = 0; $i<count($arrayData); $i++){
-                for($j = 0; $j<count($arrayData); $j++){
-                    if($arrayData[$i]->optionid != $arrayData[$j]->optionid){
-                        $object2 = (object) [
-                            'optionid2' => $arrayData[$i]->optionid,
-                            'lastinsert2' => $arrayData[$i]->lastinsert,
-                            'optionval2' => $arrayData[$i]->optionval,
-                            'optionid3' => $arrayData[$j]->optionid,
-                            'lastinsert3' => $arrayData[$j]->lastinsert,
-                            'optionval3' => $arrayData[$j]->optionval,
-                        ];
-                        array_push($arrayData2, $object2);
+            // segun la cantidad de options
+            if($contadoropcions == 1){
+                for($i = 0; $i<count($arrayData); $i++){  
+                    $object2 = (object) [
+                        'optionid2' => $arrayData[$i]->optionid,
+                        'lastinsert2' => $arrayData[$i]->lastinsert,
+                    ];
+                    array_push($arrayData2, $object2);
+                }
+                $datareal = $arrayData2;
+                $contadorpareja2 = 0;
+                //return response()->json($datareal);
+                for($k = 0; $k<count($datareal); $k++){
+                    $contadorpareja2 = $contadorpareja2 + 1;
+                    $results3 = DB::select( DB::raw('INSERT INTO optionvaluemix (n,id,idvideo,idoption,idoptionvalue, precio,img,id_item_stripe,interval_stripe,interval_count_stripe,sort,created_at,updated_at) VALUES (NULL, "'.$contadorpareja2.'", "'.$videoid.'", "'.$datareal[$k]->optionid2.'","'.$datareal[$k]->lastinsert2.'", "0" , NULL, NULL,NULL,NULL, "'.$contadorpareja2.'" ,now(),now());') );
+                }
+                //return response()->json($arrayData2);
+            }else if($contadoropcions == 2){
+                for($i = 0; $i<count($arrayData); $i++){  
+                    for($j = 0; $j<count($arrayData); $j++){
+                        if($arrayData[$i]->optionid != $arrayData[$j]->optionid){
+                            $object2 = (object) [
+                                'optionid2' => $arrayData[$i]->optionid,
+                                'lastinsert2' => $arrayData[$i]->lastinsert,
+                                'optionval2' => $arrayData[$i]->optionval,
+                                'optionid3' => $arrayData[$j]->optionid,
+                                'lastinsert3' => $arrayData[$j]->lastinsert,
+                                'optionval3' => $arrayData[$j]->optionval,
+                            ];
+                            array_push($arrayData2, $object2);
+                        }
                     }
                 }
-            }
-            $operacionmitad = count($arrayData2) / 2 ;
-            $datareal = array_slice($arrayData2, 0,$operacionmitad);
-            $contadorpareja2 = 0;
-            for($k = 0; $k<count($datareal); $k++){
-                $contadorpareja2 = $contadorpareja2 + 1;
-                $results3 = DB::select( DB::raw('INSERT INTO optionvaluemix (n,id,idvideo,idoption,idoptionvalue, precio,img,id_item_stripe,interval_stripe,interval_count_stripe,sort,created_at,updated_at) VALUES (NULL, "'.$contadorpareja2.'", "'.$videoid.'", "'.$datareal[$k]->optionid2.'","'.$datareal[$k]->lastinsert2.'", "0" , NULL, NULL,NULL,NULL, "'.$contadorpareja2.'" ,now(),now());') );
+                $operacionmitad = count($arrayData2) / $contadoropcions ;
+                $datareal = array_slice($arrayData2, 0,$operacionmitad);
+                $contadorpareja2 = 0;
+                //return response()->json($datareal);
+                for($k = 0; $k<count($datareal); $k++){
+                    $contadorpareja2 = $contadorpareja2 + 1;
+                    $results3 = DB::select( DB::raw('INSERT INTO optionvaluemix (n,id,idvideo,idoption,idoptionvalue, precio,img,id_item_stripe,interval_stripe,interval_count_stripe,sort,created_at,updated_at) VALUES (NULL, "'.$contadorpareja2.'", "'.$videoid.'", "'.$datareal[$k]->optionid2.'","'.$datareal[$k]->lastinsert2.'", "0" , NULL, NULL,NULL,NULL, "'.$contadorpareja2.'" ,now(),now());') );
+    
+                    $results4 = DB::select( DB::raw('INSERT INTO optionvaluemix (n,id,idvideo,idoption,idoptionvalue, precio,img,id_item_stripe,interval_stripe,interval_count_stripe,sort,created_at,updated_at) VALUES (NULL, "'.$contadorpareja2.'", "'.$videoid.'", "'.$datareal[$k]->optionid3.'","'.$datareal[$k]->lastinsert3.'", "0" , NULL, NULL,NULL,NULL, "'.$contadorpareja2.'" ,now(),now());') );
+                }
+            }else if($contadoropcions == 3){
+                //return response()->json($arrayData);
+                
+                for($i = 0; $i<count($arrayData); $i++){  
+                    $valork = 0;
+                    for($j = 0; $j<count($arrayData); $j++){
 
-                $results4 = DB::select( DB::raw('INSERT INTO optionvaluemix (n,id,idvideo,idoption,idoptionvalue, precio,img,id_item_stripe,interval_stripe,interval_count_stripe,sort,created_at,updated_at) VALUES (NULL, "'.$contadorpareja2.'", "'.$videoid.'", "'.$datareal[$k]->optionid3.'","'.$datareal[$k]->lastinsert3.'", "0" , NULL, NULL,NULL,NULL, "'.$contadorpareja2.'" ,now(),now());') );
+                        if($arrayData[$j]->optionid != $valork){
+                            for($k = 0; $k<count($arrayData); $k++){
+                                $valork = $arrayData[$k]->optionid;
+                                if($arrayData[$i]->optionid != $arrayData[$j]->optionid){
+                                    if($arrayData[$i]->optionid != $arrayData[$k]->optionid){
+                                        if($arrayData[$j]->optionid != $arrayData[$k]->optionid){
+                                            $object2 = (object) [
+                                                'optionid2' => $arrayData[$i]->optionid,
+                                                'lastinsert2' => $arrayData[$i]->lastinsert,
+                                                'optionval2' => $arrayData[$i]->optionval,
+                                                'optionid3' => $arrayData[$j]->optionid,
+                                                'lastinsert3' => $arrayData[$j]->lastinsert,
+                                                'optionval3' => $arrayData[$j]->optionval,
+                                                'optionid4' => $arrayData[$k]->optionid,
+                                                'lastinsert4' => $arrayData[$k]->lastinsert,
+                                                'optionval4' => $arrayData[$k]->optionval,
+                                            ];
+                                            array_push($arrayData2, $object2);
+
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                    }
+                }
+                
+                $operacionmitad = count($arrayData2) / 4;
+                $datareal = array_slice($arrayData2, 0,$operacionmitad);
+                $contadorpareja2 = 0;
+                //return response()->json($datareal);
+
+                for($k = 0; $k<count($datareal); $k++){
+                    $contadorpareja2 = $contadorpareja2 + 1;
+                    $results3 = DB::select( DB::raw('INSERT INTO optionvaluemix (n,id,idvideo,idoption,idoptionvalue, precio,img,id_item_stripe,interval_stripe,interval_count_stripe,sort,created_at,updated_at) VALUES (NULL, "'.$contadorpareja2.'", "'.$videoid.'", "'.$datareal[$k]->optionid2.'","'.$datareal[$k]->lastinsert2.'", "0" , NULL, NULL,NULL,NULL, "'.$contadorpareja2.'" ,now(),now());') );
+    
+                    $results4 = DB::select( DB::raw('INSERT INTO optionvaluemix (n,id,idvideo,idoption,idoptionvalue, precio,img,id_item_stripe,interval_stripe,interval_count_stripe,sort,created_at,updated_at) VALUES (NULL, "'.$contadorpareja2.'", "'.$videoid.'", "'.$datareal[$k]->optionid3.'","'.$datareal[$k]->lastinsert3.'", "0" , NULL, NULL,NULL,NULL, "'.$contadorpareja2.'" ,now(),now());') );
+
+                    $results5 = DB::select( DB::raw('INSERT INTO optionvaluemix (n,id,idvideo,idoption,idoptionvalue, precio,img,id_item_stripe,interval_stripe,interval_count_stripe,sort,created_at,updated_at) VALUES (NULL, "'.$contadorpareja2.'", "'.$videoid.'", "'.$datareal[$k]->optionid4.'","'.$datareal[$k]->lastinsert4.'", "0" , NULL, NULL,NULL,NULL, "'.$contadorpareja2.'" ,now(),now());') );
+                }
             }
             return response()->json(200);
         }else{

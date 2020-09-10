@@ -59,8 +59,10 @@ Route::get('getBoundaries','VideosController@getBoundaries');
 // new get allvideos
 Route::get('profile','VideosController@showordenespagadas');
 Route::get('videosbyuser','VideosController@shownew');
+
 Route::get('videosbyuseradmin','VideosController@shownewadmin');
 Route::get('videosbusqueda','VideosController@shownewbusqueda');
+
 Route::get('allvideos','VideosController@showallvideos');
 Route::get('allvideosbusqueda','VideosController@showallvideosbusqueda');
 

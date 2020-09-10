@@ -6,7 +6,7 @@ class Business extends Model{
     use Notifiable;
     protected $table = 'businesses';
     protected $fillable = [
-        'userId','descripcion'
+        'userId','descripcion','logo','details','lat','lng','direccion','pais','ciudad','zip'
     ];
     public function usuario() {
       return $this->belongsTo(Usuario::class, 'userId');
