@@ -1350,10 +1350,6 @@ class VideosController extends Controller{
         $despertar = false;
         $newlink = '';
 
-
-        $quality = '';
-        $height = '';
-
         do {
             sleep(10);
             $response = $client->request('/me'.$idvimeo, array(), 'GET');
@@ -1361,25 +1357,6 @@ class VideosController extends Controller{
 
                 foreach ($response['body']['files'] as $keyfile => $file) {
                 
-/*
-                    if($response['body']['files'][$keyfile]['link'] != ''){
-                        $compararLink = explode("profile_id=",$response['body']['files'][$keyfile]['link']);
-                        $compararLink = explode("&",$compararLink[1]);
-                        $compararLink = intval($compararLink[0]);
-                        if($compararLink == 165){
-                            $despertar = true;
-                            $responsepictures = $client->request($response['body']['uri'].'/pictures', array('time' => '0'), 'POST');
-                            $newlink = $responsepictures['body']['sizes'][0]['link'];
-                        }else{
-                            $despertar = false;
-                        }
-                    }else{
-                        $despertar = false;
-                    }*/
-                    
-
-                    
-
                     if($response['body']['files'][$keyfile]['quality'] != 'hls'){
                         if($response['body']['files'][$keyfile]['height'] == 960){
                             if($response['body']['files'][$keyfile]['link'] != ''){
@@ -1420,9 +1397,10 @@ class VideosController extends Controller{
         $size = '';
         // new data
         $width = '';
+        $quality = '';
+        $height = '';
         
-        sleep(2);
-        
+
 
         $myheight = 0;
         $mywidth = 0;
@@ -1430,56 +1408,46 @@ class VideosController extends Controller{
         $mysize = '';
 
 
-
+        $inicializarcontador = 0;
 
         $name = $response['body']['name'];
         $link = $response['body']['link'];
-        foreach ($response['body']['files'] as $keyfile => $file) {
-            $quality = $response['body']['files'][$keyfile]['quality'];
-            if($quality == 'sd'){
-                $height = $response['body']['files'][$keyfile]['height'];
-                if($height == 960){
-                    $myheight = $response['body']['files'][$keyfile]['height'];
-                    $mywidth = $response['body']['files'][$keyfile]['width'];
-                    $mylink2 = $response['body']['files'][$keyfile]['link'];
-                    $mysize = round(($response['body']['files'][$keyfile]['size']/1024/1024), 2).'M';
-                }else{
-                    if($height == 640){
-                        if($height < $myheight){
-                            $height = $myheight;
-                            $width = $mywidth;
-                            $link2 = $mylink2;
-                            $size = $mysize;
-                        }else{
-                            $myheight = $response['body']['files'][$keyfile]['height'];
-                            $mywidth = $response['body']['files'][$keyfile]['width'];
-                            $mylink2 = $response['body']['files'][$keyfile]['link'];
-                            $mysize = round(($response['body']['files'][$keyfile]['size']/1024/1024), 2).'M';
-                        }
-                        
-                    } 
-                }
 
+        do {
+            foreach ($response['body']['files'] as $keyfile => $file) {
+                $quality = $response['body']['files'][$keyfile]['quality'];
+                if($quality == 'sd'){
+                    $height = $response['body']['files'][$keyfile]['height'];
+                    if($height == 960){
+                        $myheight = $response['body']['files'][$keyfile]['height'];
+                        $mywidth = $response['body']['files'][$keyfile]['width'];
+                        $mylink2 = $response['body']['files'][$keyfile]['link'];
+                        $mysize = round(($response['body']['files'][$keyfile]['size']/1024/1024), 2).'M';
+                        $inicializarcontador = 4;
+                    }else{
+                        if($height == 640){
+                            if($height < $myheight){
+                                $height = $myheight;
+                                $width = $mywidth;
+                                $link2 = $mylink2;
+                                $size = $mysize;
+                                $inicializarcontador = 4;
+                            }else{
+                                $myheight = $response['body']['files'][$keyfile]['height'];
+                                $mywidth = $response['body']['files'][$keyfile]['width'];
+                                $mylink2 = $response['body']['files'][$keyfile]['link'];
+                                $mysize = round(($response['body']['files'][$keyfile]['size']/1024/1024), 2).'M';
+                                $inicializarcontador++;
+                                sleep(10);
+                            }
+                            
+                        } 
+                    }
+                }
             }
+        }while ($inicializarcontador < 4);
 
-/*
-            if($response['body']['files'][$keyfile]['quality'] != 'hls'){
-                if($response['body']['files'][$keyfile]['height'] == 960){
-                    $link2 = $response['body']['files'][$keyfile]['link'];
-                    $size = round(($response['body']['files'][$keyfile]['size']/1024/1024), 2).'M';
-                    $width = $response['body']['files'][$keyfile]['width'];
-                    $height = $response['body']['files'][$keyfile]['height'];
-                    break;
-                }else if($response['body']['files'][$keyfile]['height'] == 640){
-                    $link2 = $response['body']['files'][$keyfile]['link'];
-                    $size = round(($response['body']['files'][$keyfile]['size']/1024/1024), 2).'M';
-                    $width = $response['body']['files'][$keyfile]['width'];
-                    $height = $response['body']['files'][$keyfile]['height'];
-                    break;
-                }
-            }*/
-
-        }
+        
         foreach ($response['body']['pictures']['sizes'] as $keypic => $pic) {
             if($response['body']['pictures']['sizes'][$keypic]['width'] == 1280 and $response['body']['pictures']['sizes'][$keypic]['height'] == 720){
                 $link3 = $response['body']['pictures']['sizes'][$keypic]['link'];

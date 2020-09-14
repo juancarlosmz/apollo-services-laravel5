@@ -52,81 +52,118 @@ class adminProductController extends Controller{
             //return response()->json($arrayData); 
 
             if($model == 0){
+
                 $idval=0;
+                $idval_2=0;
                 $descripcion = '';
                 $descripcion_id = '';
                 $precio = 0;
                 $img = '';
                 $titlevideo = '';
                 $arrayData3 = array();
-                // primera opcion
-                for($i = 0; $i<count($arrayData); $i++){
-                    if($arrayData[$i]->id == $idval){
-                        
-                        $descripcion = $descripcion.' / '.$arrayData[$i]->option_values;
-                        $descripcion_id = $descripcion_id.' / '.$arrayData[$i]->option_values_id;
-                        $object3 = (object) [
-                            'id' => $idval,
-                            'sort' => $sort,
-                            'descripcion' => $descripcion,
-                            'descripcion_id' => $descripcion_id,
-                            'precio' => $precio,
-                            'img' => $img,
-                            'id_item_stripe' => $id_item_stripe,
-                        ];
-                        array_push($arrayData3, $object3);
-                        
-                        /*
-                        for($j = 0; $j<count($arrayData); $j++){
-                            
-                            if( $arrayData[$i]->id == $arrayData[$j]->id && $idval == $arrayData[$j]->id){
 
-                                $descripcion = $descripcion.' / '.$arrayData[$i]->option_values.' / '.$arrayData[$j]->option_values;
-                                $descripcion_id = $descripcion_id.' / '.$arrayData[$i]->option_values_id.' / '.$arrayData[$j]->option_values_id;
-                                $object3 = (object) [
-                                    'id' => $idval,
-                                    'sort' => $sort,
-                                    'descripcion' => $descripcion,
-                                    'descripcion_id' => $descripcion_id,
-                                    'precio' => $precio,
-                                    'img' => $img,
-                                    'id_item_stripe' => $id_item_stripe,
-                                ];
-                                array_push($arrayData3, $object3);
-                            }
-                        }
-                        */
-                        
-                    }
-                    $idval = $arrayData[$i]->id;
-                    $sort = $arrayData[$i]->sort;
-                    $descripcion = $arrayData[$i]->option_values;
-                    $descripcion_id = $arrayData[$i]->option_values_id;
-                    $precio = $arrayData[$i]->precio;
-                    $img = $arrayData[$i]->img;
-                    $titlevideo = $arrayData[$i]->titlevideo;
-                    $id_item_stripe = $arrayData[$i]->id_item_stripe;
-                }
-                //return response()->json($arrayData3); 
-                if(count($arrayData3) == 0){
-                    for($i = 0; $i<count($arrayData); $i++){
-                        $object3 = (object) [
-                            'id' => $arrayData[$i]->id,
-                            'descripcion' => $arrayData[$i]->option_values,
-                            'descripcion_id' => $arrayData[$i]->option_values_id,
-                            'precio' => $arrayData[$i]->precio,
-                            'img' => $arrayData[$i]->img,
-                            'id_item_stripe' => $arrayData[$i]->id_item_stripe,
-                        ];
-                        array_push($arrayData3, $object3);
-                    }
-                }
-                // lista simple_1
+                // lista simple_1 obteniendo option keys
                 $arrayData4 = array();
                 for($i = 0; $i<count($arrayData); $i++){
                     array_push($arrayData4, $arrayData[$i]->option_keys);
                 }
                 $lista_simple = array_values(array_unique($arrayData4));
+
+                // validando opciones 1 2 3
+                if(count($lista_simple) == 1){
+                    for($i = 0; $i<count($arrayData); $i++){
+                        $object3 = (object) [
+                            'id' => $arrayData[$i]->id,
+                            'sort' => $arrayData[$i]->sort,
+                            'descripcion' => $arrayData[$i]->option_values,
+                            'descripcion_id' => $arrayData[$i]->option_values_id,
+                            'precio' => $arrayData[$i]->precio,
+                            'img' => $arrayData[$i]->img,
+                            'id_item_stripe' => $arrayData[$i]->id_item_stripe,
+                            'interval_stripe' => $arrayData[$i]->interval_stripe,
+                            'interval_count_stripe' => $arrayData[$i]->interval_count_stripe,
+                        ];
+                        array_push($arrayData3, $object3);
+                    }
+                }
+                if(count($lista_simple) == 2){
+                    for($i = 0; $i<count($arrayData); $i++){
+                        if($arrayData[$i]->id == $idval){
+                            $descripcion = $descripcion.' / '.$arrayData[$i]->option_values;
+                            $descripcion_id = $descripcion_id.' / '.$arrayData[$i]->option_values_id;
+                            $object3 = (object) [
+                                'id' => $idval,
+                                'sort' => $sort,
+                                'descripcion' => $descripcion,
+                                'descripcion_id' => $descripcion_id,
+                                'precio' => $precio,
+                                'img' => $img,
+                                'id_item_stripe' => $id_item_stripe,
+                                'interval_stripe' => $interval_stripe,
+                                'interval_count_stripe' => $interval_count_stripe,
+                            ];
+                            array_push($arrayData3, $object3);
+                        }
+                        $idval = $arrayData[$i]->id;
+                        $sort = $arrayData[$i]->sort;
+                        $descripcion = $arrayData[$i]->option_values;
+                        $descripcion_id = $arrayData[$i]->option_values_id;
+                        $precio = $arrayData[$i]->precio;
+                        $img = $arrayData[$i]->img;
+                        $titlevideo = $arrayData[$i]->titlevideo;
+                        $id_item_stripe = $arrayData[$i]->id_item_stripe;
+                        $interval_stripe = $arrayData[$i]->interval_stripe;
+                        $interval_count_stripe = $arrayData[$i]->interval_count_stripe;
+                    }
+                }else if( count($lista_simple) == 3){
+                    for($i = 0; $i<count($arrayData); $i++){
+                        if($arrayData[$i]->id == $idval){
+                            $descripcion = $descripcion.' / '.$arrayData[$i]->option_values;
+                            $descripcion_id = $descripcion_id.' / '.$arrayData[$i]->option_values_id;
+                            for($j = 0; $j<count($arrayData); $j++){
+                                if($arrayData[$j]->id == $idval_2 && $arrayData[$i]->id == $idval_2){
+                                    if($arrayData[$i]->option_values != $arrayData[$j]->option_values){
+                                        $validatelast = explode(" / ", $descripcion);
+                                        if($validatelast[0] != $arrayData[$j]->option_values){
+                                            $object3 = (object) [
+                                                'id' => $idval,
+                                                'sort' => $sort,
+                                                'descripcion' => $descripcion.' / '.$arrayData[$j]->option_values,
+                                                'descripcion_id' => $descripcion_id.' / '.$arrayData[$j]->option_values_id,
+                                                'precio' => $precio,
+                                                'img' => $img,
+                                                'id_item_stripe' => $id_item_stripe,
+                                                'interval_stripe' => $interval_stripe,
+                                                'interval_count_stripe' => $interval_count_stripe,
+                                            ];
+                                            array_push($arrayData3, $object3);
+                                        }
+                                    }
+                                }
+                                $idval_2 = $arrayData[$j]->id;
+                            }
+                        }
+                        $idval = $arrayData[$i]->id;
+                        $sort = $arrayData[$i]->sort;
+                        $descripcion = $arrayData[$i]->option_values;
+                        $descripcion_id = $arrayData[$i]->option_values_id;
+                        $precio = $arrayData[$i]->precio;
+                        $img = $arrayData[$i]->img;
+                        $titlevideo = $arrayData[$i]->titlevideo;
+                        $id_item_stripe = $arrayData[$i]->id_item_stripe;
+                        $interval_stripe = $arrayData[$i]->interval_stripe;
+                        $interval_count_stripe = $arrayData[$i]->interval_count_stripe;
+                    }
+                    
+                }
+                
+                //return response()->json($arrayData3); 
+                // añade la opcion 1
+                /*
+                if(count($arrayData3) == 0){
+                    
+                }*/
+                
                 // lista simple_2
                 $arrayData5 = array();
                 for($i = 0; $i<count($arrayData); $i++){
@@ -142,6 +179,11 @@ class adminProductController extends Controller{
                 ];
                 array_push($arrayData2, $object2);
                 return response()->json($arrayData2[0]); 
+
+
+
+
+
             }else if($model == 1){
 
                 //return response()->json($arrayData); 
@@ -241,7 +283,7 @@ class adminProductController extends Controller{
         }else{
             $status = (object) [
                 'videoprofile' => $results2,
-                'idvideo' => $idvideo,
+                'idvideo' => intval($idvideo),
                 'id_product_stripe' => null,
                 'options_keys' => null,
                 'options_values' => null,

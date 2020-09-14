@@ -120,7 +120,19 @@ class UsuarioController extends Controller{
             ->where('usuarios.id_firebase', $id_firebase)
             ->get();
         if(count($data) == 0){  
-            return response()->json(false);
+            $empty = (object) [
+                'serviciosId' => null,
+                'descripcion' => null,
+                'details' => null,
+                'lat' => null,
+                'lng' => null,
+                'direccion' => null,
+                'pais' => null,
+                'ciudad' => null,
+                'zip' => null,
+                'logo' => null,
+            ];
+            return response()->json([$empty]);
         }else{
             $arrayData = array();
             for($i = 0; $i<count($data); $i++){
@@ -181,12 +193,12 @@ class UsuarioController extends Controller{
     }
     public function show2($id_firebase,$phone){
         $userId = DB::table('usuarios')
-                ->select('usuarios.id_firebase as firebaseId','usuarios.fecha_nacimiento','usuarios.sexo','usuarios.idiomaId')
+                ->select('usuarios.id_firebase as firebaseId','usuarios.fecha_nacimiento','usuarios.sexo','usuarios.name','usuarios.photo','usuarios.idiomaId')
                 ->where('usuarios.id_firebase', $id_firebase)
                 ->get();
         if(count($userId) == 0){  
                 $userphone = DB::table('usuarios')
-                ->select('usuarios.id as userId')
+                ->select('usuarios.id_firebase as firebaseId','usuarios.fecha_nacimiento','usuarios.sexo','usuarios.name','usuarios.photo','usuarios.idiomaId')
                 ->where('usuarios.phone', $phone)
                 ->get();
           if(count($userphone) == 0){
