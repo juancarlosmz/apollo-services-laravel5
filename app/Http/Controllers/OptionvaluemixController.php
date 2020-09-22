@@ -8,7 +8,7 @@ class OptionvaluemixController extends Controller{
             'idvideo' => 'required',
         ]);
         $idvideo = $request->idvideo;    
-        $results = DB::select( DB::raw('select videos.idpmtype,videos.titlevideo,optionvaluemix.idvideo as idvideo, optionvaluemix.id,options.id as option_keys_id, options.descripcion as option_keys,optionvalue.id as option_values_id, optionvalue.descripcion as option_values, optionvaluemix.precio, optionvaluemix.img, optionvaluemix.sort,optionvaluemix.id_item_stripe,optionvaluemix.interval_stripe,optionvaluemix.interval_count_stripe,videos.id_product_stripe from optionvaluemix INNER JOIN options ON options.id = optionvaluemix.idoption INNER JOIN optionvalue ON optionvalue.id = optionvaluemix.idoptionvalue INNER JOIN videos ON videos.id = optionvaluemix.idvideo where optionvaluemix.idvideo = "'.$idvideo.'" ORDER by optionvaluemix.sort ASC, options.descripcion ASC'));
+        $results = DB::select( DB::raw('select videos.idpmtype,videos.titlevideo,optionvaluemix.idvideo as idvideo, optionvaluemix.id,options.id as option_keys_id, options.descripcion as option_keys,optionvalue.id as option_values_id, optionvalue.descripcion as option_values, optionvaluemix.precio, optionvaluemix.img, optionvaluemix.sort,optionvaluemix.id_item_stripe,optionvaluemix.interval_stripe,optionvaluemix.interval_count_stripe,videos.id_product_stripe from optionvaluemix INNER JOIN options ON options.id = optionvaluemix.idoption INNER JOIN optionvalue ON optionvalue.id = optionvaluemix.idoptionvalue INNER JOIN videos ON videos.id = optionvaluemix.idvideo where optionvaluemix.idvideo = "'.$idvideo.'" ORDER by optionvaluemix.sort ASC, options.id ASC, options.descripcion ASC'));
 
         if($results){
             $arrayData = array();
@@ -38,38 +38,25 @@ class OptionvaluemixController extends Controller{
                 ];
                 array_push($arrayData, $object);
             }
-
+            
             $idval=0;
+            $idval_2=0;
             $descripcion = '';
             $descripcion_id = '';
             $precio = 0;
             $img = '';
             $titlevideo = '';
             $arrayData3 = array();
-            // primera opcion
+
+            // lista simple_1
+            $arrayData4 = array();
             for($i = 0; $i<count($arrayData); $i++){
-                if($arrayData[$i]->id == $idval){
-                    $descripcion = $descripcion.' / '.$arrayData[$i]->option_values.'<br><small>'.$titlevideo.'</small>';
-                    $descripcion_id = $descripcion_id.' / '.$arrayData[$i]->option_values_id;
-                    $object3 = (object) [
-                        'id' => $idval,
-                        'descripcion' => $descripcion,
-                        'descripcion_id' => $descripcion_id,
-                        'precio' => $precio,
-                        'img' => $img,
-                        'id_item_stripe' => $id_item_stripe,
-                    ];
-                    array_push($arrayData3, $object3);
-                }
-                $idval = $arrayData[$i]->id;
-                $descripcion = $arrayData[$i]->option_values;
-                $descripcion_id = $arrayData[$i]->option_values_id;
-                $precio = $arrayData[$i]->precio;
-                $img = $arrayData[$i]->img;
-                $titlevideo = $arrayData[$i]->titlevideo;
-                $id_item_stripe = $arrayData[$i]->id_item_stripe;
+                array_push($arrayData4, $arrayData[$i]->option_keys);
             }
-            if(count($arrayData3) == 0){
+            $lista_simple = array_values(array_unique($arrayData4));
+           
+            // validando opciones 1 2 3
+            if(count($lista_simple) == 1){
                 for($i = 0; $i<count($arrayData); $i++){
                     $object3 = (object) [
                         'id' => $arrayData[$i]->id,
@@ -78,16 +65,87 @@ class OptionvaluemixController extends Controller{
                         'precio' => $arrayData[$i]->precio,
                         'img' => $arrayData[$i]->img,
                         'id_item_stripe' => $arrayData[$i]->id_item_stripe,
+                        'interval_stripe' => $arrayData[$i]->interval_stripe,
+                        'interval_count_stripe' => $arrayData[$i]->interval_count_stripe,
                     ];
                     array_push($arrayData3, $object3);
                 }
             }
-            // lista simple_1
-            $arrayData4 = array();
-            for($i = 0; $i<count($arrayData); $i++){
-                array_push($arrayData4, $arrayData[$i]->option_keys);
+            if(count($lista_simple) == 2){
+                for($i = 0; $i<count($arrayData); $i++){
+                    if($arrayData[$i]->id == $idval){
+                        $descripcion = $descripcion.' / '.$arrayData[$i]->option_values.'<br><small>'.$titlevideo.'</small>';
+                        $descripcion_id = $descripcion_id.' / '.$arrayData[$i]->option_values_id;
+                        $object3 = (object) [
+                            'id' => $idval,
+                            'descripcion' => $descripcion,
+                            'descripcion_id' => $descripcion_id,
+                            'precio' => $precio,
+                            'img' => $img,
+                            'id_item_stripe' => $id_item_stripe,
+                            'interval_stripe' => $interval_stripe,
+                            'interval_count_stripe' => $interval_count_stripe,
+                        ];
+                        array_push($arrayData3, $object3);
+                    }
+                    $idval = $arrayData[$i]->id;
+                    $descripcion = $arrayData[$i]->option_values;
+                    $descripcion_id = $arrayData[$i]->option_values_id;
+                    $precio = $arrayData[$i]->precio;
+                    $img = $arrayData[$i]->img;
+                    $titlevideo = $arrayData[$i]->titlevideo;
+                    $id_item_stripe = $arrayData[$i]->id_item_stripe;
+                    $interval_stripe = $arrayData[$i]->interval_stripe;
+                    $interval_count_stripe = $arrayData[$i]->interval_count_stripe;
+                }
             }
-            $lista_simple = array_values(array_unique($arrayData4));
+            if(count($lista_simple) == 3){
+
+                for($i = 0; $i<count($arrayData); $i++){
+                    if($arrayData[$i]->id == $idval){
+                        $descripcion = $descripcion.' / '.$arrayData[$i]->option_values;
+                        $descripcion_id = $descripcion_id.' / '.$arrayData[$i]->option_values_id;
+                        for($j = 0; $j<count($arrayData); $j++){
+                            if($arrayData[$j]->id == $idval_2 && $arrayData[$i]->id == $idval_2){
+                                if($arrayData[$i]->option_values != $arrayData[$j]->option_values){
+                                    $validatelast = explode(" / ", $descripcion);
+                                    if($validatelast[0] != $arrayData[$j]->option_values){
+                                        $object3 = (object) [
+                                            'id' => $idval,
+                                            'sort' => $sort,
+                                            'descripcion' => $descripcion.' / '.$arrayData[$j]->option_values.'<br><small>'.$titlevideo.'</small>',
+                                            'descripcion_id' => $descripcion_id.' / '.$arrayData[$j]->option_values_id,
+                                            'precio' => $precio,
+                                            'img' => $img,
+                                            'id_item_stripe' => $id_item_stripe,
+                                            'interval_stripe' => $interval_stripe,
+                                            'interval_count_stripe' => $interval_count_stripe,
+                                        ];
+                                        array_push($arrayData3, $object3);
+                                    }
+                                }
+                            }
+                            $idval_2 = $arrayData[$j]->id;
+                        }
+                    }
+                    $idval = $arrayData[$i]->id;
+                    $sort = $arrayData[$i]->sort;
+                    $descripcion = $arrayData[$i]->option_values;
+                    $descripcion_id = $arrayData[$i]->option_values_id;
+                    $precio = $arrayData[$i]->precio;
+                    $img = $arrayData[$i]->img;
+                    $titlevideo = $arrayData[$i]->titlevideo;
+                    $id_item_stripe = $arrayData[$i]->id_item_stripe;
+                    $interval_stripe = $arrayData[$i]->interval_stripe;
+                    $interval_count_stripe = $arrayData[$i]->interval_count_stripe;
+                }
+/*
+                return response()->json([
+                    203 => 'Non-Authoritative Information', 
+                    'message' => 'Working..',
+                  ], 203);*/
+            }
+            
             // lista simple_2
             $arrayData5 = array();
             for($i = 0; $i<count($arrayData); $i++){

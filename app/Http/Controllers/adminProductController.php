@@ -248,6 +248,7 @@ class adminProductController extends Controller{
                         'option_description' => $arrayData[$i]->option_values,
                         'id_item_stripe' => $arrayData[$i]->id_item_stripe,
                         'sort' => $arrayData[$i]->sort,
+                        'idvalues' => $arrayData[$i]->option_values_id,
                     ];
                     array_push($ultimoresultado, $model2_1);
                 }
@@ -256,6 +257,7 @@ class adminProductController extends Controller{
                     'videoid' => $idvideo,
                     'payment_type' => $arrayData[0]->idpmtype,
                     'option' => $arrayData[0]->option_keys,
+                    'idoption' => $arrayData[0]->option_keys_id,
                     'optionvalues' => $ultimoresultado,
                 ];
                 array_push($ultimoresultadoficial, $model2_2);
@@ -267,6 +269,7 @@ class adminProductController extends Controller{
                         'price' => $arrayData[$i]->precio,
                         'option_description' => $arrayData[$i]->option_values,
                         'sort' => $arrayData[$i]->sort,
+                        'idvalues' => $arrayData[$i]->option_values_id,
                     ];
                     array_push($ultimoresultado, $model2_1);
                 }
@@ -275,20 +278,45 @@ class adminProductController extends Controller{
                     'videoid' => $idvideo,
                     'payment_type' => $arrayData[0]->idpmtype,
                     'option' => $arrayData[0]->option_keys,
+                    'idoption' => $arrayData[0]->option_keys_id,
                     'optionvalues' => $ultimoresultado,
                 ];
                 array_push($ultimoresultadoficial, $model2_2);
                 return response()->json($ultimoresultadoficial[0]); 
             }
         }else{
-            $status = (object) [
-                'videoprofile' => $results2,
-                'idvideo' => intval($idvideo),
-                'id_product_stripe' => null,
-                'options_keys' => null,
-                'options_values' => null,
-            ];
-            return response()->json($status); 
+            if($model == 0){
+                return response()->json([
+                    'videoprofile' => $results2,
+                    'idvideo' => intval($idvideo),
+                    'id_product_stripe' => null,
+                    'options_keys' => null,
+                    'options_values' => null,
+                  ], 200); 
+            }else if($model == 1){ 
+                return response()->json([
+                    'videoid' => intval($idvideo),
+                    'payment_type' => 1,
+                    'option' => null,
+                  ], 200);
+            }else if($model == 2){
+                return response()->json([
+                    'videoid' => intval($idvideo),
+                    'payment_type' => 2,
+                    'option' => null,
+                    'idoption' => 0,
+                    'optionvalues' => null,
+                  ], 200);
+            }else if($model == 3){
+                return response()->json([
+                    'videoid' => intval($idvideo),
+                    'payment_type' => 1,
+                    'option' => null,
+                    'idoption' => 0,
+                    'optionvalues' => null,
+                  ], 200);
+            }
+            
         }
     }
 }

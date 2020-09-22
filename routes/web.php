@@ -50,8 +50,7 @@ Route::get('videos/{id_firebase}/{idioma}','VideosController@show');
 Route::get('oldallvideos/{idservicio}/{idioma}','VideosController@show2');
 Route::get('allvideos2/{idservicio}/{idioma}','VideosController@show2_1');
 Route::post('videos/{id_firebase}','VideosController@create');
-Route::put('videos/{id}','VideosController@update');
-Route::delete('videos/{id}','VideosController@destroy');
+Route::delete('eliminarvideo','VideosController@eliminarvideo');
 // test
 Route::get('haversine','VideosController@haversine');
 Route::get('getBoundaries','VideosController@getBoundaries');
@@ -59,9 +58,10 @@ Route::get('getBoundaries','VideosController@getBoundaries');
 // new get allvideos
 Route::get('profile','VideosController@showordenespagadas');
 Route::get('videosbyuser','VideosController@shownew');
+Route::get('videosbyid','VideosController@shownewduplicado');
 
 Route::get('videosbyuseradmin','VideosController@shownewadmin');
-Route::get('videosbusqueda','VideosController@shownewbusqueda');
+Route::get('videosbyuseradminbusqueda','VideosController@shownewbusqueda');
 
 Route::get('allvideos','VideosController@showallvideos');
 Route::get('allvideosbusqueda','VideosController@showallvideosbusqueda');
@@ -94,10 +94,13 @@ Route::get('paymentmodeltype','PaymentmodelController@show');
 // creando los modelos -- variantes
 Route::post('escrituramodelo1','ModeloProducto@modelo1');
 Route::post('escrituramodelo2','ModeloProducto@modelo2');
-Route::post('escrituramodelo3','ModeloProducto@modelo3');
+Route::put('Proescrituramodelo2','ModeloProducto@Promodelo2');
+Route::put('Proescrituramodelo3','ModeloProducto@modelo3');
 
 //
-Route::post('addoptionvaluemix','UpdateOptionsValuesController@addoptionvaluemix');
+Route::post('Proescrituramodelo1','UpdateOptionsValuesController@addoptionvaluemix');
+
+
 Route::post('addoptions','UpdateOptionsValuesController@addoptions');
 Route::put('escrituramodelo0','UpdateOptionsValuesController@updateOptionsValues0');
 Route::put('updatevideopublic','UpdateOptionsValuesController@updatevideopublic');
