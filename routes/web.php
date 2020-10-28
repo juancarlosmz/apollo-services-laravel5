@@ -60,10 +60,18 @@ Route::get('profile','VideosController@showordenespagadas');
 Route::get('videosbyuser','VideosController@shownew');
 Route::get('videosbyid','VideosController@shownewduplicado');
 
+
+Route::get('allvideosadmin','VideosController@allvideosadmin');
+
 Route::get('videosbyuseradmin','VideosController@shownewadmin');
 Route::get('videosbyuseradminbusqueda','VideosController@shownewbusqueda');
 
+
+Route::get('showallvideosonlytest','VideosController@showallvideosonlytest');
+
+Route::get('allvideosL1L2','VideosController@showallvideosL1L2');
 Route::get('allvideos','VideosController@showallvideos');
+Route::get('allvideosforyou','VideosController@allvideosforyou');
 Route::get('allvideosbusqueda','VideosController@showallvideosbusqueda');
 
 // vimeo
@@ -71,7 +79,12 @@ Route::get('vimeo','VideosController@show3');
 Route::get('onevimeo','VideosController@onevimeo');
 Route::post('crearonevimeo','VideosController@crearonevimeo');
 Route::get('allvimeo','VideosController@show4');
+Route::post('crearvideovimeoweb','VideosController@crearvideovimeoweb');
 Route::post('crearvideovimeo','VideosController@crearvideovimeo');
+Route::post('crearvideovimeoprimero','VideosController@crearvideovimeoPrimero');
+
+//
+Route::put('actualizarvideo','VideosController@actualizarvideo');
 
 
 // servicios de Traducciones
@@ -103,10 +116,22 @@ Route::post('Proescrituramodelo1','UpdateOptionsValuesController@addoptionvaluem
 
 Route::post('addoptions','UpdateOptionsValuesController@addoptions');
 Route::put('escrituramodelo0','UpdateOptionsValuesController@updateOptionsValues0');
+Route::put('updateStripetest','UpdateOptionsValuesController@updateStripetest');
 Route::put('updatevideopublic','UpdateOptionsValuesController@updatevideopublic');
 
 // iso countries
 Route::get('isocountries/{iso_country}','isocountriesController@isocountries');
+Route::get('currencylist/{iso_country}/{firebasebusiness}','isocountriesController@currencylist');
+Route::post('businesscurrency','isocountriesController@businesscurrency');
+
+// version apks
+Route::get('versionapk/{versionapk}','VersionapkController@versionapk');
+
+// tags
+Route::get('searchtags','VideosController@searchtags');
+Route::post('addtags','VideosController@addtags');
+Route::get('cronjobvideotagusuario','VideosController@cronjobvideotagusuario');
+//Route::post('*','VideosController@addtags');
 
 Route::get('/', function () {
     return view('welcome');

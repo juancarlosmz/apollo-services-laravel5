@@ -8,6 +8,7 @@ use Stripe\Price;
 use Stripe\Product;
 use Stripe\Stripe;
 use Stripe\Subscription;
+use App\Config;
 
 class ModeloProducto extends Controller{
 
@@ -175,7 +176,7 @@ class ModeloProducto extends Controller{
                     ], 401);
                 }
             }
-            Stripe::setApiKey('sk_test_3RP8Mjx7h8bC6IeVcqOaSDFA');
+            Stripe::setApiKey(Config::StripeConfig()['StripeApiKey']);
             $product = Product::create(array(
                 'name' => $request->option,
                 'type' => 'service',
@@ -243,49 +244,41 @@ class ModeloProducto extends Controller{
             'payment_type' => 'required', 
             'option' => 'required',
             'idoption' => 'required',
+            'id_product_stripe' => 'required',
             'optionvalues' => 'required',   
         ]);
         $videoid = $request->videoid;
         $payment_type = $request->payment_type;
-        $option = $request->option;
+        $optioname = $request->option;
         $idoption = $request->idoption;
+        $id_product_stripe = $request->id_product_stripe;
         $optionvalues = $request->optionvalues;
         // stripe    
         try {
-            if (!$request->has("api_key")) {
-                return response()->json([
-                    'status'  => 401,
-                    'message' => 'Acceso no autorizado',
-                ], 401);
-            }
-            if ($request->has("api_key")) {
-                $api_key = "6WugwSv7Ns3fbi51fHir48ckcpG1rKxW";
-                if ($request->api_key != $api_key) {
-                    return response()->json([
-                    'status' => 401,
-                    'message' => 'Acceso no autorizado',
-                    ], 401);
-                }
-            }
+            
+            $updateidmtype = DB::select( DB::raw('UPDATE videos SET idpmtype = "'.$payment_type.'", updated_at = now() WHERE videos.id = "'.$videoid.'";') );
+
             $validateoptions = DB::select( DB::raw('select distinct optionvaluemix.idvideo from optionvaluemix where optionvaluemix.idvideo = "'.$videoid.'";'));
             if(count($validateoptions) != 0 && $idoption != 0){
-                Stripe::setApiKey('sk_test_3RP8Mjx7h8bC6IeVcqOaSDFA');
+                Stripe::setApiKey(Config::StripeConfig()['StripeApiKey']);
+/*
                 $product = Product::create(array(
-                    'name' => $option,
+                    'name' => $optioname,
                     'type' => 'service',
                 ));
+                */
                 $data = [];
                 $items = [];
                 foreach ($optionvalues as $option) {
                     if($option['idvalues'] == 0){
                         $price = Price::create(array(
-                            'unit_amount' => $option['price'],
+                            'unit_amount' => ($option['price']*100),
                             'currency'    => 'usd',
                             'recurring'   => [
                                 'interval'       => $option['interval'],
                                 'interval_count' => $option['interval_count'],
                             ],
-                            'product'     => $product->id
+                            'product'     => $id_product_stripe
                         ));
                         $items[] = [
                             "id" => $price->id
@@ -294,23 +287,33 @@ class ModeloProducto extends Controller{
                     }
                 }
                 $data = [
-                    'product' => $product->id,
+                    'product' => $id_product_stripe,
                     'tarifas' => $items,
                 ];
                 $tarifas = $data['tarifas'];
-    
+                //return response()->json($tarifas);
                 // mandando a la base de datos
                 $contadorpareja = 0;
-
+                $contartarifas = -1;
                 for ($y = 0;$y<count($optionvalues); $y++) {
-                    if($optionvalues[$y] == 0){
+                    
+                    if($optionvalues[$y]['idvalues'] == 0){
+                        $contartarifas++;
                         $results2 = DB::select( DB::raw('INSERT INTO optionvalue (id, idoption, descripcion, id_subcription, created_at, updated_at) VALUES (NULL, "'.$idoption.'", "'.$optionvalues[$y]['option_description'].'", NULL, now(),now());') );
     
                         $contadorpareja = $contadorpareja + 1;
                         $id2 = DB::getPdo()->lastInsertId();
+                        
                         for($i = 0; $i<count($tarifas); $i++){
-                            if($y == $i){
-                                $results3 = DB::select( DB::raw('INSERT INTO optionvaluemix (n,id,idvideo,idoption,idoptionvalue, precio,img,id_item_stripe,interval_stripe,interval_count_stripe,sort,created_at,updated_at) VALUES (NULL, "'.$contadorpareja.'", "'.$videoid.'", "'.$id.'","'.$id2.'", "'.$optionvalues[$y]['price'].'" , NULL, "'.$tarifas[$y]['id'].'", "'.$optionvalues[$y]['interval'].'","'.$optionvalues[$y]['interval_count'].'", "'.$optionvalues[$y]['sort'].'" ,now(),now());') );
+                            
+                            
+                            if($contartarifas == $i){
+
+                               
+                                
+                                $results3 = DB::select( DB::raw('INSERT INTO optionvaluemix (n,id,idvideo,idoption,idoptionvalue, precio,img,id_item_stripe,interval_stripe,interval_count_stripe,sort,created_at,updated_at) VALUES (NULL, "'.$optionvalues[$y]['sort'].'", "'.$videoid.'", "'.$idoption.'","'.$id2.'", "'.$optionvalues[$y]['price'].'" , NULL, "'.$tarifas[$i]['id'].'", "'.$optionvalues[$y]['interval'].'","'.$optionvalues[$y]['interval_count'].'", "'.$optionvalues[$y]['sort'].'" ,now(),now());') );
+
+
                             }
                             
                         }
@@ -319,16 +322,16 @@ class ModeloProducto extends Controller{
                 return response()->json(200);
                 // end envio a la base de datos
             }else{
-                Stripe::setApiKey('sk_test_3RP8Mjx7h8bC6IeVcqOaSDFA');
+                Stripe::setApiKey(Config::StripeConfig()['StripeApiKey']);
                 $product = Product::create(array(
-                    'name' => $option,
+                    'name' => $optioname,
                     'type' => 'service',
                 ));
                 $data = [];
                 $items = [];
                 foreach ($optionvalues as $option) {
                     $price = Price::create(array(
-                        'unit_amount' => $option['price'],
+                        'unit_amount' => ($option['price']*100),
                         'currency'    => 'usd',
                         'recurring'   => [
                             'interval'       => $option['interval'],
@@ -346,11 +349,32 @@ class ModeloProducto extends Controller{
                     'tarifas' => $items,
                 ];
                 $tarifas = $data['tarifas'];
-    
+
+                // agregar tipo de modelo fa-rotate-2
+                $validatevideomodelo = DB::select( DB::raw('select distinct videomodelo.id from videomodelo where videomodelo.idvideo = "'.$videoid.'";'));
+
+                if(count($validatevideomodelo) == 0){
+                    $insertvideomodelo = DB::select( DB::raw('INSERT INTO videomodelo (id, idvideo, idmodelo, created_at, updated_at) VALUES (NULL, "'.$videoid.'", 2, now(), now());') ); 
+                }
+                else{
+                    $eliminaoption = DB::table('videomodelo')
+                        ->where('videomodelo.idvideo',$videoid)
+                        ->delete();
+                    if($eliminaoption){
+                        $insertvideomodelo = DB::select( DB::raw('INSERT INTO videomodelo (id, idvideo, idmodelo, created_at, updated_at) VALUES (NULL, "'.$videoid.'", 2, now(), now());') ); 
+                    }    
+                }
+
+                //return response()->json($product->id);
                 // mandando a la base de datos
+                $updateidstripevideo = DB::select( DB::raw('UPDATE videos SET id_product_stripe = "'.$product->id.'", updated_at = now() WHERE videos.id = "'.$videoid.'";') );
+
                 $contadorpareja = 0;
-                $results = DB::select( DB::raw('INSERT INTO options (id, idvideo, descripcion, created_at, updated_at) VALUES (NULL, "'.$videoid.'", "'.$option.'", now(), now());') ); 
+                $results = DB::select( DB::raw('INSERT INTO options (id, idvideo, descripcion, created_at, updated_at) VALUES (NULL, "'.$videoid.'", "'.$optioname.'", now(), now());') ); 
+                
                 $id = DB::getPdo()->lastInsertId(); 
+
+                
                 for ($options = 0;$options<count($optionvalues); $options++) {
                     $results2 = DB::select( DB::raw('INSERT INTO optionvalue (id, idoption, descripcion, id_subcription, created_at, updated_at) VALUES (NULL, "'.$id.'", "'.$optionvalues[$options]['option_description'].'", NULL, now(),now());') );
     

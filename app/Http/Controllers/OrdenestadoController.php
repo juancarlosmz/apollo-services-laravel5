@@ -71,7 +71,8 @@ class OrdenestadoController extends Controller{
             ->join('ordens', 'ordens.id', '=', 'ordencambiaestados.ordenId')
             ->join('transaccions', 'transaccions.ordenId', '=', 'ordens.id')
             ->join('usuarios', 'usuarios.id', '=', 'transaccions.userIdvendedor')
-            ->select('ordens.id', 'ordens.numero', 'ordens.fechaentrega', 'ordens.descripcion as ordendescripcion', 'ordens.total','transaccions.userIdcomprador', DB::raw('max(ordenestados.descripcion) as Estados'), DB::raw('(SELECT traduccions.descripcion FROM ordenestados INNER JOIN valuesidiomas ON ordenestados.validiomaId = valuesidiomas.id INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON traduccions.idiomaId = idiomas.id WHERE idiomas.id = "'.$idioma.'" and ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS traduccion'))
+            ->join('pagos', 'pagos.ordenId', '=', 'ordens.id')
+            ->select('pagos.cliente_isocurrency','pagos.cliente_tc','pagos.business_isocurrency','pagos.business_tc','ordens.id', 'ordens.numero', 'ordens.fechaentrega', 'ordens.descripcion as ordendescripcion', 'ordens.total','transaccions.userIdcomprador', DB::raw('max(ordenestados.descripcion) as Estados'), DB::raw('(SELECT traduccions.descripcion FROM ordenestados INNER JOIN valuesidiomas ON ordenestados.validiomaId = valuesidiomas.id INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON traduccions.idiomaId = idiomas.id WHERE idiomas.id = "'.$idioma.'" and ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS traduccion'))
             ->where('usuarios.id_firebase', $id_firebase)
             ->groupBy('ordens.id')
             ->havingRaw("COUNT(ordencambiaestados.ordenestadoId) = 2")
@@ -100,6 +101,25 @@ class OrdenestadoController extends Controller{
             $arrayDataandcount = array();
             //
             for($i = 0; $i<count($arrayIds); $i++){
+                $cliente_isocurrency = 'PEN';
+                if($data[$i]->cliente_isocurrency != ""){
+                    $cliente_isocurrency = $data[$i]->cliente_isocurrency;
+                }
+
+                $cliente_tc = 3.583501;
+                if($data[$i]->cliente_tc != 0){
+                    $cliente_tc = $data[$i]->cliente_tc;
+                }
+
+                $business_isocurrency = 'PEN';
+                if($data[$i]->business_isocurrency != ""){
+                    $business_isocurrency = $data[$i]->business_isocurrency;
+                }
+
+                $business_tc = 1;
+                if($data[$i]->business_tc != 0){
+                    $business_tc = $data[$i]->business_tc;
+                }
                 $object = (object) [
                     'ordenid' => $data[$i]->id,
                     'ordentitle' => $data[$i]->numero,
@@ -109,7 +129,11 @@ class OrdenestadoController extends Controller{
                     'comprador' => $arrayIds[$i][0]->comprador,
                     'thumbImg' => $arrayIds[$i][0]->thumbImg,
                     'estado' => $data[$i]->Estados,
-                    'traduccion' => $data[$i]->traduccion
+                    'traduccion' => $data[$i]->traduccion,
+                    'cliente_isocurrency' => $cliente_isocurrency,
+                    'cliente_tc' => $cliente_tc,
+                    'business_isocurrency' => $business_isocurrency,
+                    'business_tc' => $business_tc,
                 ];
                 array_push($arrayData, $object);
             }
@@ -196,7 +220,7 @@ class OrdenestadoController extends Controller{
             ->join('transaccions', 'transaccions.ordenId', '=', 'ordens.id')
             ->join('usuarios', 'usuarios.id', '=', 'transaccions.userIdvendedor')
             ->join('pagos', 'pagos.ordenId', '=', 'ordens.id')
-            ->select('ordens.id', 'ordens.numero', 'ordens.fechaentrega', 'ordens.descripcion as ordendescripcion', 'ordens.total','transaccions.userIdcomprador', DB::raw('(SELECT ordenestados.descripcion FROM ordenestados WHERE ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS descripcion'), DB::raw('(SELECT traduccions.descripcion FROM ordenestados INNER JOIN valuesidiomas ON ordenestados.validiomaId = valuesidiomas.id INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON traduccions.idiomaId = idiomas.id WHERE idiomas.id = "'.$idioma.'" and ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS traduccion'))
+            ->select('pagos.cliente_isocurrency','pagos.cliente_tc','pagos.business_isocurrency','pagos.business_tc','ordens.id', 'ordens.numero', 'ordens.fechaentrega', 'ordens.descripcion as ordendescripcion', 'ordens.total','transaccions.userIdcomprador', DB::raw('(SELECT ordenestados.descripcion FROM ordenestados WHERE ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS descripcion'), DB::raw('(SELECT traduccions.descripcion FROM ordenestados INNER JOIN valuesidiomas ON ordenestados.validiomaId = valuesidiomas.id INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON traduccions.idiomaId = idiomas.id WHERE idiomas.id = "'.$idioma.'" and ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS traduccion'))
             ->where('usuarios.id_firebase', $id_firebase)
             ->groupBy('ordens.id')
             ->orderBy($sortMysql, 'DESC')
@@ -223,6 +247,27 @@ class OrdenestadoController extends Controller{
             $arrayData = array();
             $arrayDataandcount = array();
             for($i = 0; $i<count($arrayIds); $i++){
+
+                $cliente_isocurrency = 'PEN';
+                if($data[$i]->cliente_isocurrency != ""){
+                    $cliente_isocurrency = $data[$i]->cliente_isocurrency;
+                }
+
+                $cliente_tc = 3.583501;
+                if($data[$i]->cliente_tc != 0){
+                    $cliente_tc = $data[$i]->cliente_tc;
+                }
+
+                $business_isocurrency = 'PEN';
+                if($data[$i]->business_isocurrency != ""){
+                    $business_isocurrency = $data[$i]->business_isocurrency;
+                }
+
+                $business_tc = 1;
+                if($data[$i]->business_tc != 0){
+                    $business_tc = $data[$i]->business_tc;
+                }
+
                 $object = (object) [
                     'ordenid' => $data[$i]->id,
                     'ordentitle' => $data[$i]->numero,
@@ -232,7 +277,11 @@ class OrdenestadoController extends Controller{
                     'comprador' => $arrayIds[$i][0]->comprador,
                     'thumbImg' => $arrayIds[$i][0]->thumbImg,
                     'estado' => $data[$i]->descripcion,
-                    'traduccion' => $data[$i]->traduccion
+                    'traduccion' => $data[$i]->traduccion,
+                    'cliente_isocurrency' => $cliente_isocurrency,
+                    'cliente_tc' => $cliente_tc,
+                    'business_isocurrency' => $business_isocurrency,
+                    'business_tc' => $business_tc,
                 ];
                 array_push($arrayData, $object);
             }
@@ -275,7 +324,7 @@ class OrdenestadoController extends Controller{
             ->join('transaccions', 'transaccions.ordenId', '=', 'ordens.id')
             ->join('usuarios', 'usuarios.id', '=', 'transaccions.userIdvendedor')
             ->join('pagos', 'pagos.ordenId', '=', 'ordens.id')
-            ->select('ordens.id', 'ordens.numero', 'ordens.fechaentrega', 'ordens.descripcion as ordendescripcion', 'ordens.total','transaccions.userIdcomprador', DB::raw('(SELECT ordenestados.descripcion FROM ordenestados WHERE ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS descripcion'), DB::raw('(SELECT traduccions.descripcion FROM ordenestados INNER JOIN valuesidiomas ON ordenestados.validiomaId = valuesidiomas.id INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON traduccions.idiomaId = idiomas.id WHERE idiomas.id = "'.$idioma.'" and ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS traduccion'))
+            ->select('pagos.cliente_isocurrency','pagos.cliente_tc','pagos.business_isocurrency','pagos.business_tc','ordens.id', 'ordens.numero', 'ordens.fechaentrega', 'ordens.descripcion as ordendescripcion', 'ordens.total','transaccions.userIdcomprador', DB::raw('(SELECT ordenestados.descripcion FROM ordenestados WHERE ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS descripcion'), DB::raw('(SELECT traduccions.descripcion FROM ordenestados INNER JOIN valuesidiomas ON ordenestados.validiomaId = valuesidiomas.id INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON traduccions.idiomaId = idiomas.id WHERE idiomas.id = "'.$idioma.'" and ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS traduccion'))
             ->where('usuarios.id_firebase', $id_firebase)
             ->whereRaw('concat(ordens.numero," ",(SELECT usuarios.name FROM usuarios WHERE usuarios.id  = transaccions.userIdcomprador)) like ?', '%'.$busqueda.'%')
             ->groupBy('ordens.id')
@@ -297,6 +346,27 @@ class OrdenestadoController extends Controller{
             $arrayDataandcount = array();
             for($i = 0; $i<count($arrayIds); $i++){
                 if($busqueda != ''){
+
+                    $cliente_isocurrency = 'PEN';
+                    if($data[$i]->cliente_isocurrency != ""){
+                        $cliente_isocurrency = $data[$i]->cliente_isocurrency;
+                    }
+
+                    $cliente_tc = 3.583501;
+                    if($data[$i]->cliente_tc != 0){
+                        $cliente_tc = $data[$i]->cliente_tc;
+                    }
+
+                    $business_isocurrency = 'PEN';
+                    if($data[$i]->business_isocurrency != ""){
+                        $business_isocurrency = $data[$i]->business_isocurrency;
+                    }
+
+                    $business_tc = 1;
+                    if($data[$i]->business_tc != 0){
+                        $business_tc = $data[$i]->business_tc;
+                    }
+
                     $object = (object) [
                         'ordenid' => $data[$i]->id,
                         'ordentitle' => $data[$i]->numero,
@@ -307,7 +377,11 @@ class OrdenestadoController extends Controller{
                         'thumbImg' => $arrayIds[$i][0]->thumbImg,
                         //'logo' => $arrayIds[$i][0]->logo,
                         'estado' => $data[$i]->descripcion,
-                        'traduccion' => $data[$i]->traduccion
+                        'traduccion' => $data[$i]->traduccion,
+                        'cliente_isocurrency' => $cliente_isocurrency,
+                        'cliente_tc' => $cliente_tc,
+                        'business_isocurrency' => $business_isocurrency,
+                        'business_tc' => $business_tc,
                     ];
                     array_push($arrayData, $object);
                 }else{
@@ -349,7 +423,7 @@ class OrdenestadoController extends Controller{
             ->join('usuarios', 'usuarios.id', '=', 'transaccions.userIdvendedor')
             ->join('pagos', 'pagos.ordenId', '=', 'ordens.id')
             ->join('businesses', 'businesses.userId', '=', 'usuarios.id')
-            ->select('ordens.numero', 'ordens.descripcion as ordendescripcion', 'ordens.fechaentrega', 'ordens.total','businesses.descripcion as bussiness', 'transaccions.userIdcomprador', 'transaccions.userIdvendedor','pagos.fecha','ordenestados.descripcion as estadodescripcion','ordencambiaestados.created_at')
+            ->select('pagos.cliente_isocurrency','pagos.cliente_tc','pagos.business_isocurrency','pagos.business_tc','ordens.numero', 'ordens.descripcion as ordendescripcion', 'ordens.fechaentrega', 'ordens.total','businesses.descripcion as bussiness', 'transaccions.userIdcomprador', 'transaccions.userIdvendedor','pagos.fecha','ordenestados.descripcion as estadodescripcion','ordencambiaestados.created_at')
             ->where('usuarios.id_firebase', $id_firebase)
             ->where('ordens.id', $ordenid)
             ->get();
@@ -369,6 +443,25 @@ class OrdenestadoController extends Controller{
                     ->select('usuarios.id_firebase as idFirebasecliente', 'usuarios.name as comprador')
                     ->where('usuarios.id', $dt->userIdcomprador)
                     ->get(); 
+            $cliente_isocurrency = 'PEN';
+            if($dt->cliente_isocurrency != ""){
+                $cliente_isocurrency = $dt->cliente_isocurrency;
+            }
+
+            $cliente_tc = 3.583501;
+            if($dt->cliente_tc != 0){
+                $cliente_tc = $dt->cliente_tc;
+            }
+
+            $business_isocurrency = 'PEN';
+            if($dt->business_isocurrency != ""){
+                $business_isocurrency = $dt->business_isocurrency;
+            }
+
+            $business_tc = 1;
+            if($dt->business_tc != 0){
+                $business_tc = $dt->business_tc;
+            }        
             $object = (object) [
                 'ordentitle' => $dt->numero,
                 'producto/servicio' => $dt->ordendescripcion,
@@ -382,7 +475,11 @@ class OrdenestadoController extends Controller{
                 //'marcadoEntregado' => $entregado,
                 'fechaentregado' => $fechaentregado,
                 //'marcadoRecibido' => $recibido,
-                'fecharecibido' => $fecharecibido
+                'fecharecibido' => $fecharecibido,
+                'cliente_isocurrency' => $cliente_isocurrency,
+                'cliente_tc' => $cliente_tc,
+                'business_isocurrency' => $business_isocurrency,
+                'business_tc' => $business_tc,
             ];           
         }
         if(isset($object)){
@@ -471,7 +568,7 @@ class OrdenestadoController extends Controller{
             ->join('usuarios', 'usuarios.id', '=', 'transaccions.userIdcomprador')
             ->join('pagos', 'pagos.ordenId', '=', 'ordens.id')
             ->join('businesses', 'businesses.userId', '=', 'transaccions.userIdvendedor')
-            ->select('ordens.id', 'ordens.numero', 'ordens.fechaentrega', 'ordens.descripcion as ordendescripcion', 'ordens.total','transaccions.userIdvendedor','businesses.descripcion as bussiness', DB::raw('(SELECT ordenestados.descripcion FROM ordenestados WHERE ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS descripcion'), DB::raw('(SELECT traduccions.descripcion FROM ordenestados INNER JOIN valuesidiomas ON ordenestados.validiomaId = valuesidiomas.id INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON traduccions.idiomaId = idiomas.id WHERE idiomas.id = "'.$idioma.'" and ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS traduccion'))
+            ->select('pagos.cliente_isocurrency','pagos.cliente_tc','pagos.business_isocurrency','pagos.business_tc','ordens.id', 'ordens.numero', 'ordens.fechaentrega', 'ordens.descripcion as ordendescripcion', 'ordens.total','transaccions.userIdvendedor','businesses.descripcion as bussiness', DB::raw('(SELECT ordenestados.descripcion FROM ordenestados WHERE ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS descripcion'), DB::raw('(SELECT traduccions.descripcion FROM ordenestados INNER JOIN valuesidiomas ON ordenestados.validiomaId = valuesidiomas.id INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON traduccions.idiomaId = idiomas.id WHERE idiomas.id = "'.$idioma.'" and ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS traduccion'))
             ->where('usuarios.id_firebase', $id_firebase)
             ->groupBy('ordens.id')
             ->orderBy('ordens.fechaentrega', 'DESC')
@@ -499,6 +596,25 @@ class OrdenestadoController extends Controller{
             $arrayData = array();
             $arrayDataandcount = array();
             for($i = 0; $i<count($arrayIds); $i++){
+                $cliente_isocurrency = 'PEN';
+                if($data[$i]->cliente_isocurrency != ""){
+                    $cliente_isocurrency = $data[$i]->cliente_isocurrency;
+                }
+
+                $cliente_tc = 3.583501;
+                if($data[$i]->cliente_tc != 0){
+                    $cliente_tc = $data[$i]->cliente_tc;
+                }
+
+                $business_isocurrency = 'PEN';
+                if($data[$i]->business_isocurrency != ""){
+                    $business_isocurrency = $data[$i]->business_isocurrency;
+                }
+
+                $business_tc = 1;
+                if($data[$i]->business_tc != 0){
+                    $business_tc = $data[$i]->business_tc;
+                }
                 $object = (object) [
                     'ordenid' => $data[$i]->id,
                     'ordentitle' => $data[$i]->numero,
@@ -510,7 +626,11 @@ class OrdenestadoController extends Controller{
                     'thumbImg' => $arrayIds[$i][0]->thumbImg,
                     'logo' => $arrayIds[$i][0]->logo,
                     'estado' => $data[$i]->descripcion,
-                    'traduccion' => $data[$i]->traduccion
+                    'traduccion' => $data[$i]->traduccion,
+                    'cliente_isocurrency' => $cliente_isocurrency,
+                    'cliente_tc' => $cliente_tc,
+                    'business_isocurrency' => $business_isocurrency,
+                    'business_tc' => $business_tc,
                 ];
                 array_push($arrayData, $object);
             }
@@ -546,7 +666,7 @@ class OrdenestadoController extends Controller{
             ->join('usuarios', 'usuarios.id', '=', 'transaccions.userIdcomprador')
             ->join('pagos', 'pagos.ordenId', '=', 'ordens.id')
             ->join('businesses', 'businesses.userId', '=', 'transaccions.userIdvendedor')
-            ->select('ordens.id', 'ordens.numero', 'ordens.fechaentrega', 'ordens.descripcion as ordendescripcion', 'ordens.total','transaccions.userIdvendedor','businesses.descripcion as bussiness', DB::raw('(SELECT ordenestados.descripcion FROM ordenestados WHERE ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS descripcion'), DB::raw('(SELECT traduccions.descripcion FROM ordenestados INNER JOIN valuesidiomas ON ordenestados.validiomaId = valuesidiomas.id INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON traduccions.idiomaId = idiomas.id WHERE idiomas.id = "'.$idioma.'" and ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS traduccion'))
+            ->select('pagos.cliente_isocurrency','pagos.cliente_tc','pagos.business_isocurrency','pagos.business_tc','ordens.id', 'ordens.numero', 'ordens.fechaentrega', 'ordens.descripcion as ordendescripcion', 'ordens.total','transaccions.userIdvendedor','businesses.descripcion as bussiness', DB::raw('(SELECT ordenestados.descripcion FROM ordenestados WHERE ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS descripcion'), DB::raw('(SELECT traduccions.descripcion FROM ordenestados INNER JOIN valuesidiomas ON ordenestados.validiomaId = valuesidiomas.id INNER JOIN traduccions ON traduccions.validiomaId = valuesidiomas.id INNER JOIN idiomas ON traduccions.idiomaId = idiomas.id WHERE idiomas.id = "'.$idioma.'" and ordenestados.id = MAX(ordencambiaestados.ordenestadoId)) AS traduccion'))
             ->where('usuarios.id_firebase', $id_firebase)
             ->whereRaw('concat(ordens.numero," ",(SELECT businesses.descripcion FROM usuarios INNER JOIN businesses ON businesses.userId = usuarios.id WHERE usuarios.id  = transaccions.userIdvendedor)," ",(SELECT usuarios.name FROM usuarios WHERE usuarios.id  = transaccions.userIdvendedor)) like ?', '%'.$busqueda.'%')
             ->groupBy('ordens.id')
@@ -566,6 +686,25 @@ class OrdenestadoController extends Controller{
             $arrayDataandcount = array();
             for($i = 0; $i<count($arrayIds); $i++){
                 if($busqueda != ''){
+                    $cliente_isocurrency = 'PEN';
+                    if($data[$i]->cliente_isocurrency != ""){
+                        $cliente_isocurrency = $data[$i]->cliente_isocurrency;
+                    }
+
+                    $cliente_tc = 3.583501;
+                    if($data[$i]->cliente_tc != 0){
+                        $cliente_tc = $data[$i]->cliente_tc;
+                    }
+
+                    $business_isocurrency = 'PEN';
+                    if($data[$i]->business_isocurrency != ""){
+                        $business_isocurrency = $data[$i]->business_isocurrency;
+                    }
+
+                    $business_tc = 1;
+                    if($data[$i]->business_tc != 0){
+                        $business_tc = $data[$i]->business_tc;
+                    }
                     $object = (object) [
                         'ordenid' => $data[$i]->id,
                         'ordentitle' => $data[$i]->numero,
@@ -577,7 +716,11 @@ class OrdenestadoController extends Controller{
                         'thumbImg' => $arrayIds[$i][0]->thumbImg,
                         'logo' => $arrayIds[$i][0]->logo,
                         'estado' => $data[$i]->descripcion,
-                        'traduccion' => $data[$i]->traduccion
+                        'traduccion' => $data[$i]->traduccion,
+                        'cliente_isocurrency' => $cliente_isocurrency,
+                        'cliente_tc' => $cliente_tc,
+                        'business_isocurrency' => $business_isocurrency,
+                        'business_tc' => $business_tc,
                     ];
                     array_push($arrayData, $object);
                 }
@@ -618,7 +761,7 @@ class OrdenestadoController extends Controller{
             ->join('usuarios', 'usuarios.id', '=', 'transaccions.userIdcomprador')
             ->join('pagos', 'pagos.ordenId', '=', 'ordens.id')
             ->join('businesses', 'businesses.userId', '=', 'transaccions.userIdvendedor')
-            ->select('ordens.numero', 'ordens.descripcion as ordendescripcion', 'ordens.fechaentrega', 'ordens.total','businesses.descripcion as bussiness', 'transaccions.userIdcomprador', 'transaccions.userIdvendedor','pagos.fecha','ordenestados.descripcion as estadodescripcion','ordencambiaestados.created_at')
+            ->select('pagos.cliente_isocurrency','pagos.cliente_tc','pagos.business_isocurrency','pagos.business_tc','ordens.numero', 'ordens.descripcion as ordendescripcion', 'ordens.fechaentrega', 'ordens.total','businesses.descripcion as bussiness', 'transaccions.userIdcomprador', 'transaccions.userIdvendedor','pagos.fecha','ordenestados.descripcion as estadodescripcion','ordencambiaestados.created_at')
             ->where('usuarios.id_firebase', $id_firebase)
             ->where('ordens.id', $ordenid)
             ->get();
@@ -638,6 +781,27 @@ class OrdenestadoController extends Controller{
                     ->select('usuarios.id_firebase as idFirebasecliente', 'usuarios.name as comprador')
                     ->where('usuarios.id', $dt->userIdcomprador)
                     ->get(); 
+
+            $cliente_isocurrency = 'PEN';
+            if($dt->cliente_isocurrency != ""){
+                $cliente_isocurrency = $dt->cliente_isocurrency;
+            }
+
+            $cliente_tc = 3.583501;
+            if($dt->cliente_tc != 0){
+                $cliente_tc = $dt->cliente_tc;
+            }
+
+            $business_isocurrency = 'PEN';
+            if($dt->business_isocurrency != ""){
+                $business_isocurrency = $dt->business_isocurrency;
+            }
+
+            $business_tc = 1;
+            if($dt->business_tc != 0){
+                $business_tc = $dt->business_tc;
+            }
+
             $object = (object) [
                 'ordentitle' => $dt->numero,
                 'producto/servicio' => $dt->ordendescripcion,
@@ -651,7 +815,11 @@ class OrdenestadoController extends Controller{
                 //'marcadoEntregado' => $entregado,
                 'fechaentregado' => $fechaentregado,
                 //'marcadoRecibido' => $recibido,
-                'fecharecibido' => $fecharecibido
+                'fecharecibido' => $fecharecibido,
+                'cliente_isocurrency' => $cliente_isocurrency,
+                'cliente_tc' => $cliente_tc,
+                'business_isocurrency' => $business_isocurrency,
+                'business_tc' => $business_tc,
             ];         
         }
         if(isset($object)){

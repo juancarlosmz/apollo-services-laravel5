@@ -8,6 +8,7 @@ use Stripe\Price;
 use Stripe\Product;
 use Stripe\Stripe;
 use Stripe\Subscription;
+use App\Config;
 
 class UpdateOptionsValuesController extends Controller
 {
@@ -19,9 +20,84 @@ class UpdateOptionsValuesController extends Controller
         $idvideo = $request->idvideo;
         $public = $request->public;
 
-        $updatevideo = DB::select( DB::raw('UPDATE videos SET public = "'.$public.'", updated_at = now() WHERE videos.id = "'.$idvideo.'";') );
- 
-        return response()->json(200);
+
+
+        $results = DB::select( DB::raw('SELECT urlvideo FROM videos WHERE videos.id= "'.$idvideo.'";'));
+        
+        if($results[0]->urlvideo != ''){
+            $firstexplode = explode("external/", $results[0]->urlvideo);
+            $firstexplode = explode(".", $firstexplode[1]);
+            $updatevideo = DB::select( DB::raw('UPDATE videos SET public = "'.$public.'", updated_at = now() WHERE videos.id = "'.$idvideo.'";') );
+
+            $validareview = DB::select( DB::raw('SELECT id,status_video,urlvideo FROM reviewvideo WHERE reviewvideo.idvideo= "'.$idvideo.'";'));
+
+            //buscar categoria
+            $buscarcategoria = DB::select( DB::raw('SELECT videos.userId,serviciousuarios.serviciosId FROM videos INNER JOIN serviciousuarios ON serviciousuarios.userId = videos.userId WHERE videos.id = "'.$idvideo.'";'));
+            $serviciosId = $buscarcategoria[0]->serviciosId;
+
+            if($public == 21){
+
+                 
+                 //sumar categoria
+                $sumarvideocategoria = DB::select( DB::raw('UPDATE servicios SET nvideos = nvideos+1, updated_at = now() WHERE servicios.id = "'.$serviciosId.'";') );
+
+
+                if($validareview){
+                    $firstexplode2 = explode("external/", $validareview[0]->urlvideo);
+                    $firstexplode2 = explode(".", $firstexplode2[1]);
+                    if($firstexplode[0] != $firstexplode2[0]){
+                        $updatereview = DB::select( DB::raw('UPDATE reviewvideo SET status_video = 0, urlvideo = "'.$results[0]->urlvideo.'", updated_at = now() WHERE reviewvideo.idvideo= "'.$idvideo.'";') );
+
+                        return response()->json([
+                            200 => 'OK 1',
+                          ], 200);
+                    }else{
+                        return response()->json([
+                            200 => 'OK 2',
+                          ], 200);
+                    }
+                }else{
+                    $insertreview = DB::select( DB::raw('INSERT INTO reviewvideo (id, idvideo, status_video,urlvideo, created_at, updated_at) VALUES (NULL, "'.$idvideo.'", 0,"'.$results[0]->urlvideo.'", now(), now());') ); 
+                    return response()->json([
+                        200 => 'OK 3',
+                      ], 200);
+                }
+            }else{
+                //restar categoria
+                $restarvideocategoria = DB::select( DB::raw('UPDATE servicios SET nvideos = nvideos-1, updated_at = now() WHERE servicios.id = "'.$serviciosId.'";') );
+
+                if($validareview){
+                    if($validareview[0]->status_video == 0){
+                        $eliminareview = DB::table('reviewvideo')
+                            ->where('idvideo',$idvideo)
+                            ->delete();
+                        if($eliminareview){
+                            return response()->json([
+                                200 => 'OK 4',
+                              ], 200);
+                        }    
+                    }else{
+                        return response()->json([
+                            200 => 'OK 5',
+                          ], 200);
+                    }
+                }
+            }
+            
+        }else{
+            $resultsreview = DB::select( DB::raw('SELECT status_video FROM reviewvideo WHERE reviewvideo.idvideo= "'.$idvideo.'" and status_video = 2;'));
+            if($resultsreview){
+                return response()->json([
+                    412 => 'Precondition Failed',
+                    'message' => 'Video no disponible por que fue eliminado por infringir las reglas, suba otro video por favor',
+                  ], 412);
+            }else{
+                return response()->json([
+                    406 => 'Not Acceptable',
+                    'message' => 'Video procesando, aún no puedes publicar',
+                  ], 406);
+            }
+        }   
     }
     //
     public function addoptionvaluemix(Request $request){
@@ -277,38 +353,135 @@ class UpdateOptionsValuesController extends Controller
 
                         for($j = 0; $j<count($option); $j++){ 
 
-                            
-                            for($m = 0; $m<count($option); $m++){
-                                if($arrayData[$i]->optionid != $option[$j]['optionkeyid'] && $arrayData[$i]->optionid != $option[$m]['optionkeyid'] && $option[$j]['optionkeyid'] != $option[$m]['optionkeyid']){
-                                    $optionsval2 = explode(",", $option[$j]['optionval']);
-                                    $optionsvalid2 = explode(",", $option[$j]['optionvalid']);
-                                    // otra option
-                                    $optionsval2_1 = explode(",", $option[$m]['optionval']);
-                                    $optionsvalid2_1 = explode(",", $option[$m]['optionvalid']);
-                                    //agregar optionvaluemix
-                                    for($k = 0; $k<count($optionsvalid2); $k++){
-                                        // reemplazar valores
-                                        $myreplace = $optionsvalid2[$k];
-                                        if($optionsvalid2[$k] == 0){
-                                            for($x = 0; $x<count($arrayData); $x++){
-                                                if($optionsval2[$k] == $arrayData[$x]->optionval){
-                                                    $myreplace = $arrayData[$x]->lastinsert;
+                            if(count($arrayData_new_p) == 0){
+                                $valorantiguo = $arrayData[$i]->optionid;
+                            }
+                            for($k = 0; $k<count($arrayData_new_p); $k++){
+                                if($arrayData_new_p[$k]->optionid == $arrayData[$i]->optionid){
+                                    $valorantiguo = 0;
+                                }else{
+                                    $valorantiguo = $arrayData[$i]->optionid;
+                                }
+                            }
+
+                            if($valorantiguo != $option[$j]['optionkeyid']){
+
+                                for($m = 0; $m<count($option); $m++){
+
+                                    if(count($arrayData_new_p) == 0){
+                                        $valorantiguo2 = $arrayData[$j]->optionid;
+                                    }
+                                    for($k = 0; $k<count($arrayData_new_p); $k++){
+                                        if($arrayData_new_p[$k]->optionid == $arrayData[$j]->optionid){
+                                            $valorantiguo2 = 0;
+                                        }else{
+                                            $valorantiguo2 = $arrayData[$j]->optionid;
+                                        }
+                                    }
+
+                                    if($valorantiguo2 != $option[$m]['optionkeyid']){
+                                        $optionsval2 = explode(",", $option[$j]['optionval']);
+                                        $optionsvalid2 = explode(",", $option[$j]['optionvalid']);
+                                        // otra option
+                                        $optionsval2_1 = explode(",", $option[$m]['optionval']);
+                                        $optionsvalid2_1 = explode(",", $option[$m]['optionvalid']);
+                                        //agregar optionvaluemix
+                                        for($k = 0; $k<count($optionsvalid2); $k++){
+                                            // reemplazar valores
+                                            $myreplace = $optionsvalid2[$k];
+                                            if($optionsvalid2[$k] == 0){
+                                                for($x = 0; $x<count($arrayData); $x++){
+                                                    if($optionsval2[$k] == $arrayData[$x]->optionval){
+                                                        $myreplace = $arrayData[$x]->lastinsert;
+                                                    }
                                                 }
                                             }
-                                        }
-                                        // ingresa a la condicion
-                                        if($j == 0){
-                                            array_push($arrayParacomparar, intval($option[$j]['optionkeyid']).'@#@'.intval($myreplace).'@#@'.$optionsval2[$k].'@#@'.intval($arrayData[$i]->optionid).'@#@'.intval($arrayData[$i]->lastinsert).'@#@'.$arrayData[$i]->optionval.'@#@---'.$optionsval2_1[$k]);
-                                        }else{
-                                            array_push($arrayParacomparar, intval($arrayData[$i]->optionid).'@#@'.intval($arrayData[$i]->lastinsert).'@#@'.$arrayData[$i]->optionval.'@#@'.intval($option[$j]['optionkeyid']).'@#@'.intval($myreplace).'@#@'.$optionsval2[$k].'@#@----'.$optionsval2_1[$k]);
+                                            for($b = 0; $b<count($optionsvalid2_1); $b++){
+                                                $myreplace2 = $optionsvalid2_1[$b];
+                                                if($optionsvalid2_1[$b] == 0){
+                                                    for($x = 0; $x<count($arrayData); $x++){
+                                                        if($optionsval2_1[$b] == $arrayData[$x]->optionval){
+                                                            $myreplace2 = $arrayData[$x]->lastinsert;
+                                                        }
+                                                    }
+                                                }
+                                                // ingresa a la condicion
+                                                /*
+                                                if($j == 0 && $m == 0){
+                                                    array_push($arrayParacomparar, intval($option[$j]['optionkeyid']).'@#@'.intval($myreplace).'@#@'.$optionsval2[$k].'@#@'.intval($arrayData[$i]->optionid).'@#@'.intval($arrayData[$i]->lastinsert).'@#@'.$arrayData[$i]->optionval.'@#@---'.$optionsval2_1[$k].'@#@---'.$optionsvalid2_1[$k].'@#@---'.$myreplace2);
+                                                }else{
+                                                    array_push($arrayParacomparar, intval($arrayData[$i]->optionid).'@#@'.intval($arrayData[$i]->lastinsert).'@#@'.$arrayData[$i]->optionval.'@#@'.intval($option[$j]['optionkeyid']).'@#@'.intval($myreplace).'@#@'.$optionsval2[$k].'@#@----'.$optionsval2_1[$k].'@#@---'.$optionsvalid2_1[$k].'@#@---'.$myreplace2);
+                                                }*/
+                                                if($j == 0){
+                                                    if($arrayData[$i]->lastinsert != $arrayData[$m]->lastinsert && $option[$j]['optionkeyid'] != $option[$m]['optionkeyid']){
+                                                       
+                                                        array_push($arrayParacomparar, 
+                                                    
+                                                            intval($option[$j]['optionkeyid']).'@#@'.
+                                                            intval($myreplace).'@#@'.
+                                                            $optionsval2[$k].'@#@'.
+                                                            intval($arrayData[$i]->optionid).'@#@'.
+                                                            intval($arrayData[$i]->lastinsert).'@#@'.
+                                                            $arrayData[$i]->optionval.'@#@'.
+                                                    
+                                                    
+                                                            intval($option[$m]['optionkeyid']).'@#@'.
+                                                            intval($myreplace2).'@#@'.
+                                                            $optionsval2_1[$k]
+                                                            
+                                                        );
+                                                    }
+                                                    
+                                                }else{
+                                                    if($arrayData[$i]->lastinsert != $arrayData[$m]->lastinsert && $option[$j]['optionkeyid'] != $option[$m]['optionkeyid'] ){
+                                                        array_push($arrayParacomparar,
+                                                    
+
+                                                            intval($option[$m]['optionkeyid']).'@#@'.
+                                                            intval($myreplace2).'@#@'.
+                                                            $optionsval2_1[$k].'@#@'.
+                                                        
+                                                            
+                                                            intval($arrayData[$i]->optionid).'@#@'.
+                                                            intval($arrayData[$i]->lastinsert).'@#@'.
+                                                            $arrayData[$i]->optionval.'@#@'.
+                                                            intval($option[$j]['optionkeyid']).'@#@'.
+                                                            intval($myreplace).'@#@'.
+                                                            $optionsval2[$k]
+                                                        );
+                                                    }
+                                                    
+                                                }
+    
+                                            }
+                                            
+                                            
                                         }
                                     }
                                 }
+    
+                                
+/*
+                                if($arrayData[$i]->optionid != $option[$j]['optionkeyid'] && $arrayData[$i]->optionid != $option[$m]['optionkeyid'] && $option[$j]['optionkeyid'] != $option[$m]['optionkeyid']){
+                                    
+                                }*/
+
+
                             }
+
+                            
                         }
                     }
                     $arrayaconvertir = array_values(array_unique($arrayParacomparar));
                     return response()->json($arrayaconvertir);
+
+
+
+
+
+
+
+
                     $arrayData3 = array();
                     for($x = 0; $x<count($arrayaconvertir); $x++){
                         $changuevaluess = explode("@#@", $arrayaconvertir[$x]);
@@ -617,6 +790,47 @@ class UpdateOptionsValuesController extends Controller
         }
     }
     //
+    
+    public function updateStripetest(){
+        return response()->json(Config::VimeoConfig()['client_secret']);
+        $id_item_stripe = 'price_0HVPCIOHap96YKlCfHLNTXBN';
+        $preciofinal = 4500;
+        $id_product_stripe = 'prod_I5aMfPnzk1enX3';
+        Stripe::setApiKey(Config::StripeConfig()['StripeApiKey']);
+        
+        $price = Price::update(
+            $id_item_stripe,
+            array(
+                'active' => false
+            )
+        );
+/*
+        $price = Price::create(
+            array(
+                'unit_amount' => 9000,
+                'currency' => 'usd',
+                'recurring' => ['interval' => 'month'],
+                'product' => $id_product_stripe
+            )
+        );*/
+        
+/*
+        $product = Product::create(array(
+            'name' => 'producto para borrar sin precio',
+            'type' => 'service',
+        ));*/
+/*
+        $stripe = new \Stripe\StripeClient(
+            Config::StripeConfig()['StripeApiKey']
+          );
+
+        $stripe->products->delete(
+            'prod_I5aMfPnzk1enX3',
+            []
+        );*/
+
+        return response()->json($price);
+    }                          
     public function updateOptionsValues0(Request $request){
         
         $request->validate([
@@ -627,6 +841,7 @@ class UpdateOptionsValuesController extends Controller
         ]);
         $videoprofile = $request->videoprofile;
         $idvideo = $request->idvideo;
+        $id_product_stripe = $request->id_product_stripe;
         $options_keys = $request->options_keys;
         $options_values = $request->options_values;
 
@@ -640,7 +855,15 @@ class UpdateOptionsValuesController extends Controller
 
         
         if($options_keys == null){
-            $updatevideo = DB::select( DB::raw('UPDATE videos SET titlevideo = "'.$videoprofile[0]['titlevideo'].'", VideoDescription = "'.$videoprofile[0]['VideoDescription'].'" ,urlimagen = "'.$videoprofile[0]['urlimagen'].'", idpmtype = "'.$videoprofile[0]['idpmtype'].'", updated_at = now() WHERE videos.id = "'.$idvideo.'";') );
+
+            if($id_product_stripe != null){
+                return response()->json([
+                    406 => 'Not Acceptable',
+                    'message' => 'No se elimina, contiene Id Stripe',
+                ], 406);
+            }
+
+            $updatevideo = DB::select( DB::raw('UPDATE videos SET titlevideo = "'.$videoprofile[0]['titlevideo'].'", VideoDescription = "'.$videoprofile[0]['VideoDescription'].'", idpmtype = "'.$videoprofile[0]['idpmtype'].'", updated_at = now() WHERE videos.id = "'.$idvideo.'";') );
 
             $validateoptions = DB::select( DB::raw('select distinct optionvaluemix.idvideo from optionvaluemix where optionvaluemix.idvideo = "'.$idvideo.'";'));
 
@@ -763,21 +986,11 @@ class UpdateOptionsValuesController extends Controller
                 }
             }
         }
-        
-
-        //$operacionmitad = count($paratesteo2) / 2 ;
-        //$datareal = array_slice($paratesteo2, 0,$operacionmitad);
-        //return response()->json($datareal);
-        //return response()->json($ultimoresultado2);
-
         if(count($validateoptions) != 0){
-        //if(count($validateoptions) == 150){
-            //return response()->json(true);
             $banderaelima = false;
             $eliminaoptionvaluemix = DB::table('optionvaluemix')
                 ->where('optionvaluemix.idvideo',$idvideo)
                 ->delete();
-            
             if($eliminaoptionvaluemix){
                 $eliminaoptionvalue = DB::table('optionvalue')
                 ->join('options', 'options.id', '=', 'optionvalue.idoption')
@@ -789,7 +1002,6 @@ class UpdateOptionsValuesController extends Controller
                         ->delete();
                     if($eliminaoption){
                         $banderaelima = true;
-                        //return response()->json('data eliminada');
                     }    
                 }
             }else{
@@ -800,7 +1012,7 @@ class UpdateOptionsValuesController extends Controller
             }
 
             if($banderaelima == true){
-                $updatevideo = DB::select( DB::raw('UPDATE videos SET titlevideo = "'.$videoprofile[0]['titlevideo'].'", VideoDescription = "'.$videoprofile[0]['VideoDescription'].'" ,urlimagen = "'.$videoprofile[0]['urlimagen'].'", idpmtype = "'.$videoprofile[0]['idpmtype'].'", updated_at = now() WHERE videos.id = "'.$idvideo.'";') );
+                $updatevideo = DB::select( DB::raw('UPDATE videos SET titlevideo = "'.$videoprofile[0]['titlevideo'].'", VideoDescription = "'.$videoprofile[0]['VideoDescription'].'" , idpmtype = "'.$videoprofile[0]['idpmtype'].'", updated_at = now() WHERE videos.id = "'.$idvideo.'";') );
 
 
                 for($opt = 0; $opt<count($ultimoresultado2); $opt++){
@@ -857,6 +1069,12 @@ class UpdateOptionsValuesController extends Controller
                                     $interval_count_stripe = null;
                                 }
 
+                                if (array_key_exists('count_stripe_customer', $options_values[$i])) {
+                                    $count_stripe_customer = $options_values[$i]['count_stripe_customer'];
+                                }else{
+                                    $count_stripe_customer = null;
+                                }
+
                                 //$imagenfinal = $options_values[$i]['img'];
                                 $preciofinal = $options_values[$i]['precio'];
                                 $sortfinal = $options_values[$i]['sort'];
@@ -869,6 +1087,7 @@ class UpdateOptionsValuesController extends Controller
                                     'id_item_stripe' => $id_item_stripe,
                                     'interval_stripe' => $interval_stripe,
                                     'interval_count_stripe' => $interval_count_stripe,
+                                    'count_stripe_customer' => $count_stripe_customer,
                                     'preciofinal' => $preciofinal,
                                     'sortfinal' => $sortfinal,
                                 ];
@@ -882,6 +1101,32 @@ class UpdateOptionsValuesController extends Controller
                     for($k = 0; $k<count($datareal); $k++){
                         $contadorpareja2 = $contadorpareja2 + 1;
 
+
+
+
+
+                        // add options stripe
+
+                        if($id_product_stripe){
+                            Stripe::setApiKey(Config::StripeConfig()['StripeApiKey']);
+                            if($datareal[$k]->count_stripe_customer != 0){
+                                // update status stripe
+                                $price = Price::update(
+                                    $datareal[$k]->id_item_stripe,
+                                    array(
+                                        'active' => true
+                                    )
+                                );
+                            }else{
+                                $price = Price::update(
+                                    $datareal[$k]->id_item_stripe,
+                                    array(
+                                        'active' => false
+                                    )
+                                );
+                            }
+                        }
+
                         $results3 = DB::table('optionvaluemix')
                             ->insert([
                             'n' => null,
@@ -894,6 +1139,7 @@ class UpdateOptionsValuesController extends Controller
                             'id_item_stripe' => $datareal[$k]->id_item_stripe,
                             'interval_stripe' => $datareal[$k]->interval_stripe,
                             'interval_count_stripe' => $datareal[$k]->interval_count_stripe,
+                            'count_stripe_customer' => $datareal[$k]->count_stripe_customer,
                             'sort' => $datareal[$k]->sortfinal,
                         ]);
 
@@ -937,6 +1183,12 @@ class UpdateOptionsValuesController extends Controller
                                                 $interval_count_stripe = null;
                                             }
 
+                                            if (array_key_exists('count_stripe_customer', $options_values[$z])) {
+                                                $count_stripe_customer = $options_values[$z]['count_stripe_customer'];
+                                            }else{
+                                                $count_stripe_customer = null;
+                                            }
+
                                             
                                             $preciofinal = $options_values[$z]['precio'];
                                             $sortfinal = $options_values[$z]['sort'];
@@ -949,6 +1201,7 @@ class UpdateOptionsValuesController extends Controller
                                                 'id_item_stripe' => $id_item_stripe,
                                                 'interval_stripe' => $interval_stripe,
                                                 'interval_count_stripe' => $interval_count_stripe,
+                                                'count_stripe_customer' => $count_stripe_customer,
                                                 'preciofinal' => $preciofinal,
                                                 'sortfinal' => $sortfinal,
                                                 'optionid3' => $arrayData[$j]->optionid,
@@ -982,6 +1235,7 @@ class UpdateOptionsValuesController extends Controller
                             'id_item_stripe' => $datareal[$k]->id_item_stripe,
                             'interval_stripe' => $datareal[$k]->interval_stripe,
                             'interval_count_stripe' => $datareal[$k]->interval_count_stripe,
+                            'count_stripe_customer' => $datareal[$k]->count_stripe_customer,
                             'sort' => $datareal[$k]->sortfinal,
                         ]);
 
@@ -997,6 +1251,7 @@ class UpdateOptionsValuesController extends Controller
                             'id_item_stripe' => $datareal[$k]->id_item_stripe,
                             'interval_stripe' => $datareal[$k]->interval_stripe,
                             'interval_count_stripe' => $datareal[$k]->interval_count_stripe,
+                            'count_stripe_customer' => $datareal[$k]->count_stripe_customer,
                             'sort' => $datareal[$k]->sortfinal,
                         ]);
                         
@@ -1165,7 +1420,7 @@ class UpdateOptionsValuesController extends Controller
                 
             }
         }else{
-            $updatevideo = DB::select( DB::raw('UPDATE videos SET titlevideo = "'.$videoprofile[0]['titlevideo'].'", VideoDescription = "'.$videoprofile[0]['VideoDescription'].'" ,urlimagen = "'.$videoprofile[0]['urlimagen'].'", idpmtype = "'.$videoprofile[0]['idpmtype'].'", updated_at = now() WHERE videos.id = "'.$idvideo.'";') );
+            $updatevideo = DB::select( DB::raw('UPDATE videos SET titlevideo = "'.$videoprofile[0]['titlevideo'].'", VideoDescription = "'.$videoprofile[0]['VideoDescription'].'", idpmtype = "'.$videoprofile[0]['idpmtype'].'", updated_at = now() WHERE videos.id = "'.$idvideo.'";') );
 
             $eliminaoptionvalue = DB::table('optionvalue')
             ->join('options', 'options.id', '=', 'optionvalue.idoption')
@@ -1181,5 +1436,7 @@ class UpdateOptionsValuesController extends Controller
             }
         }
     }
+
+
     
 }

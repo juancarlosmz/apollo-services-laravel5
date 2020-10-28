@@ -16,20 +16,21 @@ class adminProductController extends Controller{
         $model = $request->model;  
         $idioma = $request->idioma;  
 
-        $results = DB::select( DB::raw('select videos.idpmtype,videos.titlevideo,optionvaluemix.idvideo as idvideo, optionvaluemix.id,options.id as option_keys_id, options.descripcion as option_keys,optionvalue.id as option_values_id, optionvalue.descripcion as option_values, optionvaluemix.precio, optionvaluemix.img, optionvaluemix.sort,optionvaluemix.id_item_stripe,optionvaluemix.interval_stripe,optionvaluemix.interval_count_stripe,videos.id_product_stripe from optionvaluemix INNER JOIN options ON options.id = optionvaluemix.idoption INNER JOIN optionvalue ON optionvalue.id = optionvaluemix.idoptionvalue INNER JOIN videos ON videos.id = optionvaluemix.idvideo where optionvaluemix.idvideo = "'.$idvideo.'" ORDER by optionvaluemix.sort ASC,options.id ASC, options.descripcion ASC'));
+        $results = DB::select( DB::raw('select videos.idpmtype,videos.titlevideo,optionvaluemix.idvideo as idvideo, optionvaluemix.id,options.id as option_keys_id, options.descripcion as option_keys,optionvalue.id as option_values_id, optionvalue.descripcion as option_values, optionvaluemix.precio, optionvaluemix.img, optionvaluemix.sort,optionvaluemix.id_item_stripe,optionvaluemix.interval_stripe,optionvaluemix.interval_count_stripe,videos.id_product_stripe,optionvaluemix.count_stripe_customer,business_isocurrency.iso_currency from optionvaluemix INNER JOIN options ON options.id = optionvaluemix.idoption INNER JOIN optionvalue ON optionvalue.id = optionvaluemix.idoptionvalue INNER JOIN videos ON videos.id = optionvaluemix.idvideo INNER JOIN businesses ON businesses.userID = videos.userId INNER JOIN business_isocurrency ON business_isocurrency.idbusiness = businesses.id where optionvaluemix.idvideo = "'.$idvideo.'" ORDER by optionvaluemix.sort ASC,options.id ASC, options.descripcion ASC'));
+        $results2 = DB::select( DB::raw('SELECT (SELECT traduccions.descripcion from traduccions INNER JOIN valuesidiomas ON valuesidiomas.id = traduccions.validiomaId INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE valuesidiomas.id = videos.public and idiomas.id = "'.$idioma.'") as traduccionpublic,videos.public, videos.titlevideo, videos.VideoDescription, IF((SELECT status_video FROM reviewvideo WHERE reviewvideo.idvideo= "'.$idvideo.'" and status_video = 2) IS NULL,videos.urlimagen,"https://firebasestorage.googleapis.com/v0/b/expertify-3b3d4.appspot.com/o/publicassets%2Fdeleted_video.png?alt=media") as urlimagen,videos.idpmtype, videos.id_product_stripe from videos WHERE videos.id = "'.$idvideo.'";'));
 
-        $results2 = DB::select( DB::raw('SELECT (SELECT traduccions.descripcion from traduccions INNER JOIN valuesidiomas ON valuesidiomas.id = traduccions.validiomaId INNER JOIN idiomas ON idiomas.id = traduccions.idiomaId WHERE valuesidiomas.id = videos.public and idiomas.id = "'.$idioma.'") as traduccionpublic,videos.public, videos.titlevideo, videos.VideoDescription,videos.urlimagen,videos.idpmtype from videos WHERE videos.id = "'.$idvideo.'";'));
-
-        //return response()->json($results);
+        //return response()->json($results2);
         if($results){
             $arrayData = array();
             $arrayData2 = array();
             $idvideo;
             $id_product_stripe;
+            $iso_currency;
             $mytitlevideo = '';
             for($i = 0; $i<count($results); $i++){
                 $idvideo = $results[$i]->idvideo;
                 $id_product_stripe = $results[$i]->id_product_stripe;
+                $iso_currency = $results[$i]->iso_currency;
                 $mytitlevideo = strip_tags($results[$i]->titlevideo);
                 $object = (object) [
                     'idpmtype' => $results[$i]->idpmtype,
@@ -46,6 +47,7 @@ class adminProductController extends Controller{
                     'interval_count_stripe' => $results[$i]->interval_count_stripe,
                     'titlevideo' => str_replace('<br>',' ',$results[$i]->titlevideo),
                     'sort' => $results[$i]->sort,
+                    'count_stripe_customer' => $results[$i]->count_stripe_customer,
                 ];
                 array_push($arrayData, $object);
             }
@@ -82,6 +84,7 @@ class adminProductController extends Controller{
                             'id_item_stripe' => $arrayData[$i]->id_item_stripe,
                             'interval_stripe' => $arrayData[$i]->interval_stripe,
                             'interval_count_stripe' => $arrayData[$i]->interval_count_stripe,
+                            'count_stripe_customer' => $arrayData[$i]->count_stripe_customer,
                         ];
                         array_push($arrayData3, $object3);
                     }
@@ -101,6 +104,7 @@ class adminProductController extends Controller{
                                 'id_item_stripe' => $id_item_stripe,
                                 'interval_stripe' => $interval_stripe,
                                 'interval_count_stripe' => $interval_count_stripe,
+                                'count_stripe_customer' => $count_stripe_customer,
                             ];
                             array_push($arrayData3, $object3);
                         }
@@ -114,6 +118,7 @@ class adminProductController extends Controller{
                         $id_item_stripe = $arrayData[$i]->id_item_stripe;
                         $interval_stripe = $arrayData[$i]->interval_stripe;
                         $interval_count_stripe = $arrayData[$i]->interval_count_stripe;
+                        $count_stripe_customer = $arrayData[$i]->count_stripe_customer;
                     }
                 }else if( count($lista_simple) == 3){
                     for($i = 0; $i<count($arrayData); $i++){
@@ -135,6 +140,8 @@ class adminProductController extends Controller{
                                                 'id_item_stripe' => $id_item_stripe,
                                                 'interval_stripe' => $interval_stripe,
                                                 'interval_count_stripe' => $interval_count_stripe,
+                                                'count_stripe_customer' => $count_stripe_customer,
+                                                
                                             ];
                                             array_push($arrayData3, $object3);
                                         }
@@ -153,6 +160,7 @@ class adminProductController extends Controller{
                         $id_item_stripe = $arrayData[$i]->id_item_stripe;
                         $interval_stripe = $arrayData[$i]->interval_stripe;
                         $interval_count_stripe = $arrayData[$i]->interval_count_stripe;
+                        $count_stripe_customer = $arrayData[$i]->count_stripe_customer;
                     }
                     
                 }
@@ -173,6 +181,7 @@ class adminProductController extends Controller{
                 $object2 = (object) [
                     'videoprofile' => $results2,
                     'idvideo' => $idvideo,
+                    'iso_currency' => $iso_currency,
                     'id_product_stripe' => $id_product_stripe,
                     'options_keys' => $lista_simple,
                     'options_values' => $arrayData3,
@@ -242,7 +251,7 @@ class adminProductController extends Controller{
                 $ultimoresultado = array();
                 for($i = 0; $i<count($arrayData); $i++){
                     $model2_1 = (object) [
-                        'price' => $arrayData[$i]->precio,
+                        'price' => floatval($arrayData[$i]->precio),
                         'interval' => $arrayData[$i]->interval_stripe,
                         'interval_count' => $arrayData[$i]->interval_count_stripe,
                         'option_description' => $arrayData[$i]->option_values,
@@ -258,6 +267,7 @@ class adminProductController extends Controller{
                     'payment_type' => $arrayData[0]->idpmtype,
                     'option' => $arrayData[0]->option_keys,
                     'idoption' => $arrayData[0]->option_keys_id,
+                    'id_product_stripe' => $arrayData[0]->id_product_stripe,
                     'optionvalues' => $ultimoresultado,
                 ];
                 array_push($ultimoresultadoficial, $model2_2);
@@ -289,7 +299,7 @@ class adminProductController extends Controller{
                 return response()->json([
                     'videoprofile' => $results2,
                     'idvideo' => intval($idvideo),
-                    'id_product_stripe' => null,
+                    'id_product_stripe' => $results2[0]->id_product_stripe,
                     'options_keys' => null,
                     'options_values' => null,
                   ], 200); 
@@ -305,6 +315,7 @@ class adminProductController extends Controller{
                     'payment_type' => 2,
                     'option' => null,
                     'idoption' => 0,
+                    'id_product_stripe' => $results2[0]->id_product_stripe,
                     'optionvalues' => null,
                   ], 200);
             }else if($model == 3){

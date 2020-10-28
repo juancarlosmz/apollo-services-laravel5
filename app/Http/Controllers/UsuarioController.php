@@ -6,6 +6,7 @@ use App\Serviciousuario;
 use Illuminate\Http\Request;
 use App\Http\Requests\UsuarioRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 class UsuarioController extends Controller{
     public function create(Request $request){
         $userId = DB::table('usuarios')
@@ -28,7 +29,10 @@ class UsuarioController extends Controller{
                     'sexo' => null,
                     'idiomaId' => $request->idiomaId
                     ]);
+                       
                 if($objeto){
+                    $idusuario = DB::getPdo()->lastInsertId();
+                    $results = DB::select( DB::raw('INSERT INTO instalaciones (id, idusuario, crearusuario,crearservicio, home,created_at, updated_at) VALUES (NULL, "'.$idusuario.'",1,0,0,now(), now());') ); 
                     return response(200);
                 }
             }else{
@@ -42,6 +46,7 @@ class UsuarioController extends Controller{
                         'idiomaId' => $request->idiomaId
                 ]);
                 if($objeto3){
+                    $results = DB::select( DB::raw('INSERT INTO instalaciones (id, idusuario, crearusuario,crearservicio, home,created_at, updated_at) VALUES (NULL, "'.$userId[0]->userId.'",1,0,0,now(), now());') );
                     return response(200);
                 }
             }    
@@ -54,9 +59,10 @@ class UsuarioController extends Controller{
                 'name' => $request->name,
                 'photo' => $request->photo,
             ]);
-            if($objeto2){
+            //if($objeto2){
+                $results = DB::select( DB::raw('INSERT INTO instalaciones (id, idusuario, crearusuario,crearservicio, home,created_at, updated_at) VALUES (NULL, "'.$userId[0]->userId.'",1,0,0,now(), now());') );
                 return response(200);
-            }
+            //}
         }     
     }
     public function create2(Request $request){
@@ -87,9 +93,17 @@ class UsuarioController extends Controller{
                     'serviciosId' => $request->servicioId
                     ]);    
                 if($objeto3){
+                    $results = DB::select( DB::raw('INSERT INTO instalaciones (id, idusuario, crearusuario,crearservicio, home,created_at, updated_at) VALUES (NULL, "'.$userId[0]->userId.'",0,1,0,now(), now());') );
                     return response(200);
                 }
             }else{
+
+
+                //buscar categoria
+                $buscarcategoria = DB::select( DB::raw('SELECT videos.userId,serviciousuarios.serviciosId FROM videos INNER JOIN serviciousuarios ON serviciousuarios.userId = videos.userId WHERE videos.userId = "'.$userId[0]->userId.'";'));
+                
+  
+                
                 $objeto = DB::table('serviciousuarios')
                     ->where('userId', $userId[0]->userId)
                     ->update([
@@ -108,6 +122,19 @@ class UsuarioController extends Controller{
                     'Zip' => $request->zip,
                     'logo' => $request->logo,
                 ]);
+
+                if(!empty($buscarcategoria)){
+                      $serviciosId = $buscarcategoria[0]->serviciosId;
+                    // contar videos publicos
+                    $contarpublicos = DB::select( DB::raw('SELECT count(id) as contador FROM videos WHERE videos.userId = "'.$userId[0]->userId.'" and videos.public = 21;'));
+                    $contarpublicos = $contarpublicos[0]->contador;
+                    //sumar categoria
+                    $sumarvideocategoria = DB::select( DB::raw('UPDATE servicios SET nvideos = nvideos+"'.$contarpublicos.'", updated_at = now() WHERE servicios.id = "'.$request->servicioId.'";') );
+                    //restar categoria
+                    $restarvideocategoria = DB::select( DB::raw('UPDATE servicios SET nvideos = nvideos-"'.$contarpublicos.'", updated_at = now() WHERE servicios.id = "'.$serviciosId.'";') );
+                }
+
+                $results = DB::select( DB::raw('INSERT INTO instalaciones (id, idusuario, crearusuario,crearservicio, home,created_at, updated_at) VALUES (NULL, "'.$userId[0]->userId.'",0,1,0,now(), now());') );
                 return response(200);
             }   
         }

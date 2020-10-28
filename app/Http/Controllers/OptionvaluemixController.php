@@ -6,11 +6,50 @@ class OptionvaluemixController extends Controller{
     public function show(Request $request){
         $request->validate([
             'idvideo' => 'required',
+            'id_firebase_visitante' => 'required',
+            'tiempo' => 'required',
         ]);
-        $idvideo = $request->idvideo;    
-        $results = DB::select( DB::raw('select videos.idpmtype,videos.titlevideo,optionvaluemix.idvideo as idvideo, optionvaluemix.id,options.id as option_keys_id, options.descripcion as option_keys,optionvalue.id as option_values_id, optionvalue.descripcion as option_values, optionvaluemix.precio, optionvaluemix.img, optionvaluemix.sort,optionvaluemix.id_item_stripe,optionvaluemix.interval_stripe,optionvaluemix.interval_count_stripe,videos.id_product_stripe from optionvaluemix INNER JOIN options ON options.id = optionvaluemix.idoption INNER JOIN optionvalue ON optionvalue.id = optionvaluemix.idoptionvalue INNER JOIN videos ON videos.id = optionvaluemix.idvideo where optionvaluemix.idvideo = "'.$idvideo.'" ORDER by optionvaluemix.sort ASC, options.id ASC, options.descripcion ASC'));
+        $idvideo = $request->idvideo; 
+        $id_firebase_visitante = $request->id_firebase_visitante; 
+        $tiempo = $request->tiempo; 
+           
+        $results = DB::select( DB::raw('select videos.idpmtype,videos.userId,videos.titlevideo,optionvaluemix.idvideo as idvideo, optionvaluemix.id,options.id as option_keys_id, options.descripcion as option_keys,optionvalue.id as option_values_id, optionvalue.descripcion as option_values, optionvaluemix.precio, optionvaluemix.img, optionvaluemix.sort,optionvaluemix.id_item_stripe,optionvaluemix.interval_stripe,optionvaluemix.interval_count_stripe,videos.id_product_stripe from optionvaluemix INNER JOIN options ON options.id = optionvaluemix.idoption INNER JOIN optionvalue ON optionvalue.id = optionvaluemix.idoptionvalue INNER JOIN videos ON videos.id = optionvaluemix.idvideo where optionvaluemix.count_stripe_customer = 1 and optionvaluemix.idvideo = "'.$idvideo.'" ORDER by optionvaluemix.sort ASC, options.id ASC, options.descripcion ASC'));
 
+        
         if($results){
+
+            $userId = DB::table('usuarios')
+                ->select('usuarios.id as userId')
+                ->where('usuarios.id_firebase', $id_firebase_visitante)
+                ->get();
+
+            $results2 = DB::select( DB::raw('select idtag from videotags WHERE idvideo = "'.$idvideo.'";'));    
+
+            if(count($results2) == 1){
+                $inserttags = DB::select( DB::raw('INSERT INTO tagsvideousuario (id, idusuario, idvideo, idtag, tiempo ,created_at, updated_at) VALUES (NULL, "'.$userId[0]->userId.'","'.$idvideo.'","'.$results2[0]->idtag.'","'.$tiempo.'",now(), now());'));
+            }else if(count($results2) == 2){
+                $inserttags = DB::select( DB::raw('
+                INSERT INTO tagsvideousuario (id, idusuario, idvideo, idtag, tiempo ,created_at, updated_at) VALUES 
+                (NULL, "'.$userId[0]->userId.'","'.$idvideo.'","'.$results2[0]->idtag.'","'.$tiempo.'",now(), now()),
+                (NULL, "'.$userId[0]->userId.'","'.$idvideo.'","'.$results2[1]->idtag.'","'.$tiempo.'",now(), now());'));
+            }else if(count($results2) == 3){
+                $inserttags = DB::select( DB::raw('
+                INSERT INTO tagsvideousuario (id, idusuario, idvideo, idtag, tiempo ,created_at, updated_at) VALUES 
+                (NULL, "'.$userId[0]->userId.'","'.$idvideo.'","'.$results2[0]->idtag.'","'.$tiempo.'",now(), now()),
+                (NULL, "'.$userId[0]->userId.'","'.$idvideo.'","'.$results2[1]->idtag.'","'.$tiempo.'",now(), now()),
+                (NULL, "'.$userId[0]->userId.'","'.$idvideo.'","'.$results2[2]->idtag.'","'.$tiempo.'",now(), now()) ;'));
+            }
+/*
+            for($k = 0; $k<count($results2); $k++){
+                $inserttags = DB::select( DB::raw('INSERT INTO tagsvideousuario (id, idusuario, idvideo, idtag, tiempo ,created_at, updated_at) VALUES (NULL, "'.$userId[0]->userId.'","'.$idvideo.'","'.$results2[$k]->idtag.'","'.$tiempo.'",now(), now());'));
+            }*/
+            
+
+/*
+            $insertinstalacion = DB::select( DB::raw('INSERT INTO instalaciones (id, idusuario, crearusuario,crearservicio, home,created_at, updated_at) VALUES (NULL, "'.$userId[0]->userId.'",0,0,1,now(), now());') );   */ 
+
+            $inserttracking = DB::select( DB::raw('INSERT INTO tracking (id, idusuario, idvideo, idnegocio, idorden, idpago ,created_at, updated_at) VALUES (NULL, "'.$userId[0]->userId.'","'.$idvideo.'",0,0,0,now(), now());') );    
+
             $arrayData = array();
             $arrayData2 = array();
             $idvideo;
@@ -20,6 +59,8 @@ class OptionvaluemixController extends Controller{
                 $idvideo = $results[$i]->idvideo;
                 $id_product_stripe = $results[$i]->id_product_stripe;
                 $mytitlevideo = strip_tags($results[$i]->titlevideo);
+                
+
                 $object = (object) [
                     'idpmtype' => $results[$i]->idpmtype,
                     'id' => $results[$i]->id,
@@ -160,6 +201,7 @@ class OptionvaluemixController extends Controller{
                 'options_values' => $arrayData3,
             ];
             array_push($arrayData2, $object2);
+            //$results = DB::select( DB::raw('INSERT INTO tracking (id, idusuario, idvideo,idnegocio,idorden,idpago,identregado,idrecibido,created_at, updated_at) VALUES (NULL, "'.$userId[0]->userId.'","'.$idvideo.'",0,0,0,0,0,now(), now());') );
             return response()->json($arrayData2); 
 
         }else{

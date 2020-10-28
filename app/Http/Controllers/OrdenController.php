@@ -34,7 +34,11 @@ class OrdenController extends Controller{
             'fechaentrega' => $request->fechaentrega
             ]);  
         if($objeto){
+
             $id = DB::getPdo()->lastInsertId();  
+
+            $inserttracking = DB::select( DB::raw('INSERT INTO tracking (id, idusuario, idvideo, idnegocio, idorden, idpago ,created_at, updated_at) VALUES (NULL, "'.$userIdcomprador[0]->userIdcomprador.'",0,0,"'.$id.'",0,now(), now());') );
+            
             $numeroincrement = Orden::find($id)->increment('numero');
             // Agrega una orden con el estado == 1 => creada
             $objeto2 = Ordencambiaestado::create([
